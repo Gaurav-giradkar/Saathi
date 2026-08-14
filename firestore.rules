@@ -1,0 +1,35 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function mine(uid) { return signedIn() && request.auth.uid == uid; }
+    function activeConnection() {
+      return signedIn() && resource.data.status == 'active' &&
+        (resource.data.ownerUid == request.auth.uid || resource.data.supporterUid == request.auth.uid);
+    }
+
+    match /users/{uid} {
+      allow read, create, update: if mine(uid);
+      allow delete: if false;
+      match /cycles/{cycleId} { allow read, write: if mine(uid); }
+      match /healthEntries/{entryId} { allow read, write: if mine(uid); }
+    }
+
+    match /connections/{connectionId} {
+      allow create: if signedIn() && request.resource.data.ownerUid == request.auth.uid;
+      allow read: if activeConnection() || (signedIn() && resource.data.ownerUid == request.auth.uid);
+      allow update: if signedIn() && (
+        resource.data.ownerUid == request.auth.uid ||
+        (resource.data.status == 'pending' && resource.data.supporterUid == null &&
+          request.resource.data.ownerUid == resource.data.ownerUid &&
+          request.resource.data.inviteCode == resource.data.inviteCode &&
+          request.resource.data.status == 'pending' && request.resource.data.supporterUid == request.auth.uid)
+      );
+      allow delete: if false;
+      match /shared/{documentId} {
+        allow read: if activeConnection();
+        allow write: if signedIn() && get(/databases/$(database)/documents/connections/$(connectionId)).data.ownerUid == request.auth.uid;
+      }
+    }
+  }
+}
