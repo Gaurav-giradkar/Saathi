@@ -9,7 +9,7 @@ export default function Navbar({ items, accent = 'rose' }) {
   const navigate = useNavigate()
   const { refreshAuth, showToast } = useApp()
 
-  const activeAccent = { rose: 'bg-rose-50 text-rose-600', teal: 'bg-teal-50 text-teal-700' }[accent]
+  const activeAccent = { rose: 'bg-phase-menstrual-light text-brand-coral', teal: 'bg-phase-follicular-light text-phase-follicular' }[accent]
 
   const handleLogout = async () => {
     await logout()
@@ -22,7 +22,7 @@ export default function Navbar({ items, accent = 'rose' }) {
     <header className="lg:hidden sticky top-0 z-40 bg-surface/95 backdrop-blur border-b border-ink-100">
       <div className="flex items-center justify-between px-4 py-3">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-rose-500 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg bg-brand-coral flex items-center justify-center">
             <Flower2 size={16} className="text-white" />
           </div>
           <span className="font-display font-bold text-ink-900">Saathi</span>

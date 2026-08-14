@@ -17,7 +17,7 @@ h1, h2, h3, h4 {
 
 /* visible keyboard focus */
 :focus-visible {
-  outline: 2px solid #E85D75;
+  outline: 2px solid #E96A78;
   outline-offset: 2px;
   border-radius: 4px;
 }
@@ -27,7 +27,7 @@ h1, h2, h3, h4 {
   height: 8px;
 }
 ::-webkit-scrollbar-thumb {
-  background: #F0DDE2;
+  background: #E9E1DC;
   border-radius: 8px;
 }
 ::-webkit-scrollbar-track {

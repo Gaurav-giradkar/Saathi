@@ -9,8 +9,8 @@ export default function Sidebar({ items, accent = 'rose' }) {
   const { refreshAuth, showToast } = useApp()
 
   const activeAccent = {
-    rose: 'bg-rose-50 text-rose-600',
-    teal: 'bg-teal-50 text-teal-700',
+    rose: 'bg-phase-menstrual-light text-brand-coral',
+    teal: 'bg-phase-follicular-light text-phase-follicular',
   }[accent]
 
   const handleLogout = async () => {
@@ -23,7 +23,7 @@ export default function Sidebar({ items, accent = 'rose' }) {
   return (
     <aside className="hidden lg:flex flex-col w-64 shrink-0 h-screen sticky top-0 border-r border-ink-100 bg-surface px-4 py-6">
       <div className="flex items-center gap-2 px-2 mb-8">
-        <div className="w-9 h-9 rounded-xl bg-rose-500 flex items-center justify-center">
+        <div className="w-9 h-9 rounded-xl bg-brand-coral flex items-center justify-center">
           <Flower2 size={18} className="text-white" />
         </div>
         <span className="font-display font-bold text-lg text-ink-900">Saathi</span>

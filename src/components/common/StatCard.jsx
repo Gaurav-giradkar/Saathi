@@ -3,10 +3,10 @@ import Card from './Card.jsx'
 
 export default function StatCard({ icon: Icon, label, value, sublabel, accent = 'rose' }) {
   const accents = {
-    rose: 'bg-rose-50 text-rose-500',
-    teal: 'bg-teal-50 text-teal-600',
-    amber: 'bg-amber-50 text-amber-600',
-    plum: 'bg-plum-50 text-plum-500',
+    rose: 'bg-phase-menstrual-light text-phase-menstrual',
+    teal: 'bg-phase-follicular-light text-phase-follicular',
+    amber: 'bg-phase-ovulation-light text-phase-ovulation',
+    plum: 'bg-phase-luteal-light text-phase-luteal',
   }
   return (
     <Card className="flex items-center gap-4">
