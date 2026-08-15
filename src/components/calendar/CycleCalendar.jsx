@@ -33,7 +33,7 @@ export function getCycleCategoryForDate(date, cycleSetup) {
   return null
 }
 
-export default function CycleCalendar({ cycleSetup }) {
+export default function CycleCalendar({ cycleSetup, selectedDate, onSelectDay }) {
   const today = new Date()
   const [viewDate, setViewDate] = useState(new Date(today.getFullYear(), today.getMonth(), 1))
 
@@ -55,6 +55,7 @@ export default function CycleCalendar({ cycleSetup }) {
   }, [viewDate])
 
   const isToday = (d) => d && d.toDateString() === today.toDateString()
+  const isSelected = (d) => d && selectedDate && d.toDateString() === selectedDate.toDateString()
 
   return (
     <div>
@@ -95,10 +96,13 @@ export default function CycleCalendar({ cycleSetup }) {
               const meta = category ? CATEGORY_META[category] : null
               return (
                 <div key={di} className="flex items-center justify-center aspect-square">
-                  <div
+                  <button
+                    type="button"
+                    onClick={() => onSelectDay?.(d)}
                     className={[
-                      'w-full h-full max-w-[38px] max-h-[38px] rounded-full flex items-center justify-center text-[13px] font-semibold transition-transform',
+                      'w-full h-full max-w-[38px] max-h-[38px] rounded-full flex items-center justify-center text-[13px] font-semibold transition-transform hover:scale-105',
                       isToday(d) ? 'ring-2 ring-offset-2 ring-ink-800' : '',
+                      isSelected(d) ? 'ring-2 ring-offset-2 ring-brand-coral' : '',
                     ].join(' ')}
                     style={{
                       backgroundColor: meta ? meta.color : 'transparent',
@@ -106,7 +110,7 @@ export default function CycleCalendar({ cycleSetup }) {
                     }}
                   >
                     {d.getDate()}
-                  </div>
+                  </button>
                 </div>
               )
             })}

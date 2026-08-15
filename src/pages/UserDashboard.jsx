@@ -19,6 +19,14 @@ import { MOOD_OPTIONS } from '../data/mockData.js'
 function formatDate(iso) {
   return new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
 }
+function getGreeting() {
+  const hour = new Date().getHours()
+
+  if (hour < 12) return 'Good morning'
+  if (hour < 17) return 'Good afternoon'
+  if (hour < 21) return 'Good evening'
+  return 'Good night'
+}
 
 export default function UserDashboard() {
   const [user, setUser] = useState(null)
@@ -42,13 +50,13 @@ export default function UserDashboard() {
   const moodMeta = MOOD_OPTIONS.find((m) => m.key === todayLog?.mood)
 
   return (
-    <div className="flex flex-col gap-6 animate-fadeIn">
+   <div className="flex flex-col gap-6 animate-fadeIn bg-[#FFF8FB] min-h-screen p-4 sm:p-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div>
           <h1 className="font-display text-2xl sm:text-3xl font-semibold text-ink-900">
-            Hello, {user.name || 'there'} 👋
+            {getGreeting()}, {user.name || 'there'} 👋
           </h1>
-          <p className="text-ink-500 text-sm mt-1">Here's where things stand today.</p>
+          <p className="text-ink-500 text-sm mt-1">Here's how your cycle & wellbeing look today.</p>
         </div>
         <PhaseBadge phaseKey={cycle.phaseKey} />
       </div>
@@ -60,9 +68,10 @@ export default function UserDashboard() {
             cycleLength={cycle.cycleLength}
             periodLength={cycle.periodLength}
             phaseKey={cycle.phaseKey}
+            nextPeriodDate={cycle.nextPeriodDate}
           />
           <p className="text-sm text-ink-600 font-medium mt-4">{cycle.phase.label} phase</p>
-          <p className="text-xs text-ink-400 mt-1 text-center max-w-[220px]">{cycle.phase.desc}</p>
+      
         </Card>
 
         <div className="grid sm:grid-cols-2 gap-4">
@@ -84,18 +93,73 @@ export default function UserDashboard() {
 
       <Card>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-display font-semibold text-ink-900 text-lg">Quick health check</h2>
+         <div className="mb-5">
+  <div className="flex items-center gap-3">
+    <div className="w-10 h-10 rounded-xl bg-rose-50 flex items-center justify-center">
+      <Smile size={20} className="text-rose-500" />
+    </div>
+
+    <div>
+      <h2 className="font-display font-semibold text-ink-900 text-xl">
+        Today's Check-In
+      </h2>
+
+      <p className="text-sm font-medium text-rose-500 mt-0.5">
+  How are you feeling? 
+</p>
+    </div>
+  </div>
+</div>
+    
           <Link to="/daily-health" className="text-sm font-semibold text-rose-600 hover:text-rose-700 flex items-center gap-1">
-            Log today <ArrowRight size={14} />
+            Update <ArrowRight size={14} />
           </Link>
         </div>
-        <div className="flex flex-wrap gap-3">
-          <HealthMetricCard icon={Frown} label="Pain" value={todayLog?.pain ? `${todayLog.pain}/10` : '—'} accent="rose" />
-          <HealthMetricCard icon={Smile} label="Mood" value={moodMeta ? `${moodMeta.emoji} ${moodMeta.label}` : '—'} accent="amber" />
-          <HealthMetricCard icon={Zap} label="Energy" value={todayLog?.energy || '—'} accent="plum" />
-          <HealthMetricCard icon={Moon} label="Sleep" value={todayLog?.sleep ? `${todayLog.sleep} hrs` : '—'} accent="teal" />
-          <HealthMetricCard icon={Droplets} label="Water" value={todayLog?.water ? `${todayLog.water} glasses` : '—'} accent="rose" />
-        </div>
+       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+
+  <div className="rounded-2xl bg-rose-50 p-4 text-center hover:shadow-sm transition">
+    <div className="text-2xl mb-2">🤕</div>
+    <p className="text-sm font-semibold text-ink-800">Pain</p>
+    <p className="text-xs text-rose-600 mt-1 font-medium">
+      {todayLog?.pain ? `${todayLog.pain}/10` : 'Not logged'}
+    </p>
+  </div>
+
+  <div className="rounded-2xl bg-amber-50 p-4 text-center hover:shadow-sm transition">
+    <div className="text-2xl mb-2">
+      {moodMeta?.emoji || '😊'}
+    </div>
+    <p className="text-sm font-semibold text-ink-800">Mood</p>
+    <p className="text-xs text-amber-600 mt-1 font-medium">
+      {moodMeta?.label || 'Not logged'}
+    </p>
+  </div>
+
+  <div className="rounded-2xl bg-purple-50 p-4 text-center hover:shadow-sm transition">
+    <div className="text-2xl mb-2">⚡</div>
+    <p className="text-sm font-semibold text-ink-800">Energy</p>
+    <p className="text-xs text-purple-600 mt-1 font-medium">
+      {todayLog?.energy || 'Not logged'}
+    </p>
+  </div>
+
+  <div className="rounded-2xl bg-blue-50 p-4 text-center hover:shadow-sm transition">
+    <div className="text-2xl mb-2">😴</div>
+    <p className="text-sm font-semibold text-ink-800">Sleep</p>
+    <p className="text-xs text-blue-600 mt-1 font-medium">
+      {todayLog?.sleep ? `${todayLog.sleep} hrs` : 'Not logged'}
+    </p>
+  </div>
+
+  <div className="rounded-2xl bg-cyan-50 p-4 text-center hover:shadow-sm transition">
+    <div className="text-2xl mb-2">💧</div>
+    <p className="text-sm font-semibold text-ink-800">Water</p>
+    <p className="text-xs text-cyan-600 mt-1 font-medium">
+      {todayLog?.water ? `${todayLog.water} glasses` : 'Not logged'}
+    </p>
+  </div>
+
+</div>
         {!todayLog && (
           <div className="mt-4 flex items-center gap-2 bg-rose-50 rounded-xl px-4 py-3">
             <ClipboardPlus size={16} className="text-rose-500 shrink-0" />
@@ -108,19 +172,46 @@ export default function UserDashboard() {
       </Card>
 
       <div className="grid lg:grid-cols-2 gap-6">
-        <Card>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-display font-semibold text-ink-900 text-lg">AI insights</h2>
-            <Link to="/insights" className="text-sm font-semibold text-rose-600 hover:text-rose-700 flex items-center gap-1">
-              View all <ArrowRight size={14} />
-            </Link>
-          </div>
-          <div className="flex flex-col gap-3">
-            {insights?.insights?.slice(0, 2).map((ins) => (
-              <InsightCard key={ins.id} type={ins.type} title={ins.title} body={ins.body} />
-            ))}
-          </div>
-        </Card>
+       <Card className="overflow-hidden">
+  <div className="flex items-center justify-between mb-5">
+    <div>
+      <div className="flex items-center gap-2">
+        <Sparkles size={18} className="text-rose-500" />
+        <h2 className="font-display font-semibold text-ink-900 text-lg">
+          Today's Saathi Insight
+        </h2>
+      </div>
+
+      <p className="text-sm text-ink-500 mt-1">
+        A little reminder from Saathi for you 💗
+      </p>
+    </div>
+  </div>
+
+  <div className="flex items-center gap-5">
+    <div className="flex-1">
+      <p className="text-sm sm:text-base text-ink-700 leading-relaxed">
+        Every day is a new opportunity to take care of yourself.
+        Listen to your body, celebrate small progress, and remember
+        that your wellbeing matters. 🌸
+      </p>
+
+      <Link to="/insights" className="inline-block mt-4">
+        <Button size="sm">
+          ✨ Ask Saathi AI
+        </Button>
+      </Link>
+    </div>
+
+    <div className="hidden sm:flex w-28 h-28 rounded-2xl bg-rose-50 items-center justify-center shrink-0">
+      <img
+        src="/images/saathi-girl.png"
+        alt="Saathi"
+        className="w-24 h-24 object-contain"
+      />
+    </div>
+  </div>
+</Card>
 
         <Card>
           <div className="flex items-center justify-between mb-4">
@@ -129,26 +220,109 @@ export default function UserDashboard() {
               View all <ArrowRight size={14} />
             </Link>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            {recs?.categories?.slice(0, 2).map((c) => (
-              <RecommendationCard key={c.key} icon={c.icon} title={c.title} tip={c.tip} color={c.color} />
-            ))}
-          </div>
+        <div className="grid grid-cols-3 gap-3">
+  <RecommendationCard
+    icon="🥗"
+    title="Nutrition"
+    tip="Healthy choices for your cycle"
+    color="rose"
+  />
+
+  <RecommendationCard
+    icon="🏃"
+    title="Movement"
+    tip="Gentle activities for today"
+    color="plum"
+  />
+
+  <RecommendationCard
+    icon="🧘"
+    title="Self Care"
+    tip="Take a little time for yourself"
+    color="teal"
+  />
+</div>
         </Card>
       </div>
 
-      <Card>
-        <h2 className="font-display font-semibold text-ink-900 text-lg mb-3">Recent symptoms</h2>
-        {user.commonSymptoms?.length ? (
-          <div className="flex flex-wrap gap-2">
-            {user.commonSymptoms.map((s) => (
-              <span key={s} className="text-sm font-medium bg-rose-50 text-rose-600 px-3 py-1.5 rounded-full">{s}</span>
-            ))}
-          </div>
-        ) : (
-          <p className="text-sm text-ink-500">No symptoms logged yet. Log a daily check-in to build your history.</p>
-        )}
-      </Card>
+      <Card className="relative overflow-hidden">
+  <div className="flex items-center justify-between mb-5">
+    <div>
+      <h2 className="font-display font-semibold text-ink-900 text-lg">
+        Recent Symptoms
+      </h2>
+      <p className="text-sm text-ink-500 mt-1">
+        Track how you're feeling today ☺️
+      </p>
+    </div>
+
+    <Link to="/daily-health">
+      <Button size="sm" variant="subtle">
+        + Add Symptoms
+      </Button>
+    </Link>
+  </div>
+
+  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+
+    <div className="rounded-2xl bg-rose-50 p-4">
+      <div className="text-2xl mb-2">🤕</div>
+      <p className="font-semibold text-ink-900">Cramps</p>
+      <span className="text-xs text-rose-600 font-medium">
+        Moderate
+      </span>
+    </div>
+
+    <div className="rounded-2xl bg-pink-50 p-4">
+      <div className="text-2xl mb-2">🌸</div>
+      <p className="font-semibold text-ink-900">Acne</p>
+      <span className="text-xs text-pink-600 font-medium">
+        Mild
+      </span>
+    </div>
+
+    <div className="rounded-2xl bg-purple-50 p-4">
+      <div className="text-2xl mb-2">😣</div>
+      <p className="font-semibold text-ink-900">Backache</p>
+      <span className="text-xs text-purple-600 font-medium">
+        Mild
+      </span>
+    </div>
+
+    <div className="rounded-2xl bg-amber-50 p-4">
+      <div className="text-2xl mb-2">🍫</div>
+      <p className="font-semibold text-ink-900">Cravings</p>
+      <span className="text-xs text-amber-600 font-medium">
+        Moderate
+      </span>
+    </div>
+
+    <div className="rounded-2xl bg-orange-50 p-4">
+      <div className="text-2xl mb-2">🫧</div>
+      <p className="font-semibold text-ink-900">Bloating</p>
+      <span className="text-xs text-orange-600 font-medium">
+        Mild
+      </span>
+    </div>
+
+    <div className="rounded-2xl bg-teal-50 p-4">
+      <div className="text-2xl mb-2">😴</div>
+      <p className="font-semibold text-ink-900">Fatigue</p>
+      <span className="text-xs text-teal-600 font-medium">
+        Moderate
+      </span>
+    </div>
+
+    <div className="rounded-2xl bg-indigo-50 p-4">
+      <div className="text-2xl mb-2">🤯</div>
+      <p className="font-semibold text-ink-900">Headache</p>
+      <span className="text-xs text-indigo-600 font-medium">
+        Mild
+      </span>
+    </div>
+
+  </div>
+</Card>
     </div>
   )
 }
