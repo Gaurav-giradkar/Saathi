@@ -130,8 +130,12 @@ export default function LandingPage() {
             <img 
               src={saathiHero} 
               alt="Saathi menstrual health companion illustration" 
-              className="relative z-10 w-full max-w-md lg:max-w-[420px] h-auto object-contain drop-shadow-2xl opacity-0 animate-[fadeIn_1.5s_ease-out_forwards]"
+<<<<<<< HEAD
+              className="relative z-10 w-full max-w-md lg:max-w-[400px] h-auto object-contain drop-shadow-2xl opacity-0 animate-[fadeIn_1.5s_ease-out_forwards]"
             />
+=======
+               className="relative z-10 w-full max-w-md lg:max-w-[400px] h-auto object-contain drop-shadow-2xl opacity-0 animate-[fadeIn_1.5s_ease-out_forwards]"/>
+>>>>>>> 2a028a0 (hero image size change to 420px)
           </div>
         </div>
       </section>
