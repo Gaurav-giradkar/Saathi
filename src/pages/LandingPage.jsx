@@ -124,20 +124,16 @@ export default function LandingPage() {
               </div>
             </FadeIn>
           </div>
-          
           <div className="relative lg:h-[600px] flex items-center justify-center mt-10 lg:mt-0">
             <div className="absolute inset-0 bg-gradient-to-tr from-phase-menstrual-light/40 to-phase-ovulation-light/40 rounded-full blur-3xl scale-90"></div>
             <img 
               src={saathiHero} 
               alt="Saathi menstrual health companion illustration" 
-<<<<<<< HEAD
               className="relative z-10 w-full max-w-md lg:max-w-[400px] h-auto object-contain drop-shadow-2xl opacity-0 animate-[fadeIn_1.5s_ease-out_forwards]"
             />
-=======
-               className="relative z-10 w-full max-w-md lg:max-w-[400px] h-auto object-contain drop-shadow-2xl opacity-0 animate-[fadeIn_1.5s_ease-out_forwards]"/>
->>>>>>> 2a028a0 (hero image size change to 420px)
           </div>
         </div>
+          
       </section>
 
       {/* SECTION 3 — WHY SAATHI? */}
