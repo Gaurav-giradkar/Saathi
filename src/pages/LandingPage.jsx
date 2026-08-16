@@ -301,12 +301,12 @@ export default function LandingPage() {
       {/* FOOTER */}
       <footer className="border-t border-ink-100 bg-surface py-10 text-center relative z-10">
         <div className="flex justify-center items-center gap-2 mb-4">
-          <Flower2 size={16} className="text-brand-coral" />
+          <Flower2 size={20} className="text-brand-coral" />
           <span className="font-display font-bold text-ink-900">Saathi</span>
         </div>
         <p className="text-sm text-ink-800 mb-4">Understand Your Cycle. Take Better Care.</p>
-        <p className="text-xs text-ink-500">
-          Built for SIH — demo data only, not a medical device.
+        <p className="text-xs text-ink-600">
+          Made with care. Built for understanding.
         </p>
       </footer>
     </div>

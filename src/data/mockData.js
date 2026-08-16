@@ -269,13 +269,17 @@ export const EDUCATION_TOPICS = [
     summary: 'Separate common menstrual myths from evidence-based information.',
 
     content: [
-      'Myth: You should completely avoid exercise during your period. Fact: Gentle or moderate physical activity can be helpful for some people and may reduce period discomfort.',
+      'Myth: You should completely avoid exercise during your period.',
+      'Fact: Gentle or moderate physical activity can be helpful for some people and may reduce period discomfort.',
 
-      'Myth: Every period must arrive on exactly the same day each month. Fact: Cycle length can naturally vary between people and between cycles.',
+      'Myth: Every period must arrive on exactly the same day each month. ',
+      'Fact: Cycle length can naturally vary between people and between cycles.',
 
-      'Myth: Menstrual blood is dirty or impure. Fact: Menstrual fluid is a normal mixture of blood, tissue from the uterine lining, and other fluids.',
+      'Myth: Menstrual blood is dirty or impure. ',
+      'Fact: Menstrual fluid is a normal mixture of blood, tissue from the uterine lining, and other fluids.',
 
-      'Myth: There is one menstrual product that is best for everyone. Fact: Pads, tampons, menstrual cups, and period underwear have different characteristics, and the best choice depends on individual needs, comfort, access, and preferences.',
+      'Myth: There is one menstrual product that is best for everyone.',
+      'Fact: Pads, tampons, menstrual cups, and period underwear have different characteristics, and the best choice depends on individual needs, comfort, access, and preferences.',
     ],
   },
 
