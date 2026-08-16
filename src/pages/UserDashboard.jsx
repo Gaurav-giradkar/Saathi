@@ -1,13 +1,10 @@
 import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
-  CalendarClock, Sparkles, Frown, Smile, Zap, Moon, Droplets, ArrowRight, ClipboardPlus,
+   Sparkles,  Smile,  ArrowRight, ClipboardPlus,
 } from 'lucide-react'
 import Card from '../components/common/Card.jsx'
-import StatCard from '../components/common/StatCard.jsx'
-import HealthMetricCard from '../components/common/HealthMetricCard.jsx'
 import PhaseBadge from '../components/common/PhaseBadge.jsx'
-import InsightCard from '../components/common/InsightCard.jsx'
 import RecommendationCard from '../components/common/RecommendationCard.jsx'
 import CycleRing from '../components/charts/CycleRing.jsx'
 import Button from '../components/common/Button.jsx'
@@ -15,6 +12,7 @@ import {
   getUserData, getCycleData, getInsights, getRecommendations, getHealthData,
 } from '../data/api.js'
 import { MOOD_OPTIONS } from '../data/mockData.js'
+import saathiGirl from '../images/saathi-girl.png.png'
 
 function formatDate(iso) {
   return new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
@@ -61,115 +59,187 @@ export default function UserDashboard() {
         <PhaseBadge phaseKey={cycle.phaseKey} />
       </div>
 
-      <div className="grid lg:grid-cols-[auto_1fr] gap-6">
-        <Card className="flex flex-col items-center justify-center !p-8">
-          <CycleRing
-            cycleDay={cycle.cycleDay}
-            cycleLength={cycle.cycleLength}
-            periodLength={cycle.periodLength}
-            phaseKey={cycle.phaseKey}
-            nextPeriodDate={cycle.nextPeriodDate}
-          />
-          <p className="text-sm text-ink-600 font-medium mt-4">{cycle.phase.label} phase</p>
-      
-        </Card>
+      <div className="grid lg:grid-cols-[0.75fr_1.5fr] gap-6">
 
-        <div className="grid sm:grid-cols-2 gap-4">
-          <StatCard icon={CalendarClock} label="Cycle Day" value={cycle.cycleDay} sublabel={`of ${cycle.cycleLength}-day cycle`} accent="rose" />
-          <StatCard icon={Droplets} label="Next Period" value={`In ${cycle.daysUntilNextPeriod} days`} sublabel={formatDate(cycle.nextPeriodDate)} accent="plum" />
-          <Card className="sm:col-span-2 flex items-start gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center shrink-0">
-              <Sparkles size={18} className="text-amber-500" />
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-ink-500 uppercase tracking-wide mb-0.5">Today's insight</p>
-              <p className="text-sm text-ink-800 font-medium leading-relaxed">
-                {insights?.insights?.[0]?.body || 'Your energy levels may improve — a good day for light exercise.'}
-              </p>
-            </div>
-          </Card>
+  {/* LEFT - CYCLE RING */}
+  <Card className="flex flex-col items-center justify-center !p-8">
+    <CycleRing
+      cycleDay={cycle.cycleDay}
+      cycleLength={cycle.cycleLength}
+      periodLength={cycle.periodLength}
+      phaseKey={cycle.phaseKey}
+      nextPeriodDate={cycle.nextPeriodDate}
+    />
+
+    <p className="text-sm text-ink-600 font-medium mt-4">
+      {cycle.phase.label} phase
+    </p>
+
+    <div className="mt-4 text-center">
+      <p className="text-xs text-ink-400 uppercase tracking-wide">
+        Next Period
+      </p>
+
+      <p className="text-lg font-semibold text-rose-600 mt-1">
+        {formatDate(cycle.nextPeriodDate)}
+      </p>
+    </div>
+  </Card>
+
+
+  {/* RIGHT - TODAY'S CHECK-IN */}
+  <Card className="!p-6">
+
+    {/* HEADER */}
+    <div className="flex items-center justify-between mb-5">
+
+      <div className="flex items-center gap-3">
+
+        <div className="w-10 h-10 rounded-xl bg-rose-50 flex items-center justify-center">
+          <Smile size={20} className="text-rose-500" />
         </div>
+
+        <div>
+          <h2 className="font-display font-semibold text-ink-900 text-xl">
+            Today's Check-In
+          </h2>
+
+          <p className="text-sm font-medium text-rose-500 mt-0.5">
+            How are you feeling?
+          </p>
+        </div>
+
       </div>
 
-      <Card>
-        <div className="flex items-center justify-between mb-4">
-         <div className="mb-5">
-  <div className="flex items-center gap-3">
-    <div className="w-10 h-10 rounded-xl bg-rose-50 flex items-center justify-center">
-      <Smile size={20} className="text-rose-500" />
+      <Link
+        to="/daily-health"
+        className="text-sm font-semibold text-rose-600 hover:text-rose-700 flex items-center gap-1"
+      >
+        Update
+        <ArrowRight size={14} />
+      </Link>
+
     </div>
 
-    <div>
-      <h2 className="font-display font-semibold text-ink-900 text-xl">
-        Today's Check-In
-      </h2>
 
-      <p className="text-sm font-medium text-rose-500 mt-0.5">
-  How are you feeling? 
-</p>
-    </div>
-  </div>
-</div>
-    
-          <Link to="/daily-health" className="text-sm font-semibold text-rose-600 hover:text-rose-700 flex items-center gap-1">
-            Update <ArrowRight size={14} />
-          </Link>
+    {/* CHECK-IN ITEMS */}
+    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+
+      {/* PAIN */}
+      <div className="rounded-2xl bg-rose-50 p-4 text-center hover:shadow-sm transition">
+        <div className="text-2xl mb-2">🤕</div>
+
+        <p className="text-sm font-semibold text-ink-800">
+          Pain
+        </p>
+
+        <p className="text-xs text-rose-600 mt-1 font-medium">
+          {todayLog?.pain
+            ? `${todayLog.pain}/10`
+            : 'Not logged'}
+        </p>
+      </div>
+
+
+      {/* MOOD */}
+      <div className="rounded-2xl bg-amber-50 p-4 text-center hover:shadow-sm transition">
+        <div className="text-2xl mb-2">
+          {moodMeta?.emoji || '😊'}
         </div>
-       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
 
-  <div className="rounded-2xl bg-rose-50 p-4 text-center hover:shadow-sm transition">
-    <div className="text-2xl mb-2">🤕</div>
-    <p className="text-sm font-semibold text-ink-800">Pain</p>
-    <p className="text-xs text-rose-600 mt-1 font-medium">
-      {todayLog?.pain ? `${todayLog.pain}/10` : 'Not logged'}
-    </p>
-  </div>
+        <p className="text-sm font-semibold text-ink-800">
+          Mood
+        </p>
 
-  <div className="rounded-2xl bg-amber-50 p-4 text-center hover:shadow-sm transition">
-    <div className="text-2xl mb-2">
-      {moodMeta?.emoji || '😊'}
+        <p className="text-xs text-amber-600 mt-1 font-medium">
+          {moodMeta?.label || 'Not logged'}
+        </p>
+      </div>
+
+
+      {/* ENERGY */}
+      <div className="rounded-2xl bg-purple-50 p-4 text-center hover:shadow-sm transition">
+        <div className="text-2xl mb-2">
+          ⚡
+        </div>
+
+        <p className="text-sm font-semibold text-ink-800">
+          Energy
+        </p>
+
+        <p className="text-xs text-purple-600 mt-1 font-medium">
+          {todayLog?.energy || 'Not logged'}
+        </p>
+      </div>
+
+
+      {/* SLEEP */}
+      <div className="rounded-2xl bg-blue-50 p-4 text-center hover:shadow-sm transition">
+        <div className="text-2xl mb-2">
+          😴
+        </div>
+
+        <p className="text-sm font-semibold text-ink-800">
+          Sleep
+        </p>
+
+        <p className="text-xs text-blue-600 mt-1 font-medium">
+          {todayLog?.sleep
+            ? `${todayLog.sleep} hrs`
+            : 'Not logged'}
+        </p>
+      </div>
+
+
+      {/* WATER */}
+      <div className="rounded-2xl bg-cyan-50 p-4 text-center hover:shadow-sm transition">
+        <div className="text-2xl mb-2">
+          💧
+        </div>
+
+        <p className="text-sm font-semibold text-ink-800">
+          Water
+        </p>
+
+        <p className="text-xs text-cyan-600 mt-1 font-medium">
+          {todayLog?.water
+            ? `${todayLog.water} glasses`
+            : 'Not logged'}
+        </p>
+      </div>
+
     </div>
-    <p className="text-sm font-semibold text-ink-800">Mood</p>
-    <p className="text-xs text-amber-600 mt-1 font-medium">
-      {moodMeta?.label || 'Not logged'}
-    </p>
-  </div>
 
-  <div className="rounded-2xl bg-purple-50 p-4 text-center hover:shadow-sm transition">
-    <div className="text-2xl mb-2">⚡</div>
-    <p className="text-sm font-semibold text-ink-800">Energy</p>
-    <p className="text-xs text-purple-600 mt-1 font-medium">
-      {todayLog?.energy || 'Not logged'}
-    </p>
-  </div>
 
-  <div className="rounded-2xl bg-blue-50 p-4 text-center hover:shadow-sm transition">
-    <div className="text-2xl mb-2">😴</div>
-    <p className="text-sm font-semibold text-ink-800">Sleep</p>
-    <p className="text-xs text-blue-600 mt-1 font-medium">
-      {todayLog?.sleep ? `${todayLog.sleep} hrs` : 'Not logged'}
-    </p>
-  </div>
+    {/* IF NOTHING LOGGED */}
+    {!todayLog && (
+      <div className="mt-4 flex items-center gap-2 bg-rose-50 rounded-xl px-4 py-3">
 
-  <div className="rounded-2xl bg-cyan-50 p-4 text-center hover:shadow-sm transition">
-    <div className="text-2xl mb-2">💧</div>
-    <p className="text-sm font-semibold text-ink-800">Water</p>
-    <p className="text-xs text-cyan-600 mt-1 font-medium">
-      {todayLog?.water ? `${todayLog.water} glasses` : 'Not logged'}
-    </p>
-  </div>
+        <ClipboardPlus
+          size={16}
+          className="text-rose-500 shrink-0"
+        />
 
-</div>
-        {!todayLog && (
-          <div className="mt-4 flex items-center gap-2 bg-rose-50 rounded-xl px-4 py-3">
-            <ClipboardPlus size={16} className="text-rose-500 shrink-0" />
-            <p className="text-sm text-rose-700">You haven't logged anything today yet.</p>
-            <Link to="/daily-health" className="ml-auto">
-              <Button size="sm" variant="subtle">Log now</Button>
-            </Link>
+        <p className="text-sm text-rose-700">
+          You haven't logged anything today yet.
+        </p>
+
+        <Link
+          to="/daily-health"
+          className="ml-auto"
+        >
+          <Button size="sm" variant="subtle">
+            Log now
+          </Button>
+        </Link>
+
           </div>
-        )}
-      </Card>
+    )}
+
+        </Card>
+
+       </div>
+             
 
       <div className="grid lg:grid-cols-2 gap-6">
        <Card className="overflow-hidden">
@@ -202,14 +272,13 @@ export default function UserDashboard() {
         </Button>
       </Link>
     </div>
-
-    <div className="hidden sm:flex w-28 h-28 rounded-2xl bg-rose-50 items-center justify-center shrink-0">
-      <img
-        src="/images/saathi-girl.png"
-        alt="Saathi"
-        className="w-24 h-24 object-contain"
-      />
-    </div>
+<div className="hidden sm:flex w-36 h-36 rounded-3xl bg-rose-50 items-center justify-center shrink-0 overflow-hidden">
+  <img
+    src={saathiGirl}
+    alt="Saathi"
+    className="w-full h-full object-contain"
+  />
+</div>
   </div>
 </Card>
 
