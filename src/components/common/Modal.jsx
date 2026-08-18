@@ -15,7 +15,7 @@ export default function Modal({ open, onClose, title, children, footer, size = '
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-ink-900/40 backdrop-blur-sm animate-fadeIn" onClick={onClose} />
+      <div className="absolute inset-0 bg-white/70 backdrop-blur-sm animate-fadeIn" onClick={onClose} />
       <div className={`relative w-full ${widths[size]} bg-surface rounded-2xl shadow-lift p-6 animate-slideUp max-h-[85vh] overflow-y-auto`}>
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-display font-semibold text-ink-900">{title}</h3>

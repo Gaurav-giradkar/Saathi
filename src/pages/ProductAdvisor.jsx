@@ -34,7 +34,7 @@ export default function ProductAdvisor() {
                 <Icon size={20} className="text-rose-500" strokeWidth={2} />
               </div>
               <h3 className="font-display font-semibold text-ink-900 text-base mb-1">{p.name}</h3>
-              <p className="text-xs text-ink-500 mb-3">{p.bestFor}</p>
+              <p className="text-xs text-ink-500 mb-3 text-justify">{p.bestFor}</p>
               <div className="flex items-center justify-between text-xs text-ink-500 mb-1">
                 <span>Comfort</span><Stars count={p.comfort} />
               </div>
@@ -66,22 +66,57 @@ export default function ProductAdvisor() {
       <Card padded={false} className="overflow-x-auto">
         <table className="w-full text-sm min-w-[640px]">
           <thead>
-            <tr className="border-b border-ink-100 text-left text-xs text-ink-500 uppercase tracking-wide">
-              <th className="py-3 px-5 font-semibold">Product</th>
-              <th className="py-3 px-5 font-semibold">Absorbency</th>
-              <th className="py-3 px-5 font-semibold">Reusable</th>
-              <th className="py-3 px-5 font-semibold">Cost / cycle</th>
+            <tr className="border-b border-ink-200 text-xs text-ink-1000 uppercase tracking-wide">
+              <th className="py-3 px-5 text-center font-semibold">
+                Product
+              </th>
+
+              <th className="py-3 px-5 text-center font-semibold">
+                Absorbency
+              </th>
+
+              <th className="py-3 px-5 text-center font-semibold">
+                Reusable
+              </th>
             </tr>
           </thead>
+
           <tbody>
             {PRODUCTS.map((p, i) => (
-              <tr key={p.id} className={i !== PRODUCTS.length - 1 ? 'border-b border-ink-100' : ''}>
-                <td className="py-3 px-5 font-medium text-ink-800">{p.name}</td>
-                <td className="py-3 px-5 text-ink-600">{p.absorbency}</td>
-                <td className="py-3 px-5">
-                  {p.reusable ? <Check size={16} className="text-teal-500" /> : <X size={16} className="text-ink-300" />}
+              <tr
+                key={p.id}
+                className={
+                  i !== PRODUCTS.length - 1
+                    ? 'border-b border-ink-100'
+                    : ''
+                }
+              >
+                {/* Product */}
+                <td className="py-3 px-5 text-center font-medium text-ink-800">
+                  {p.name}
                 </td>
-                <td className="py-3 px-5 text-ink-600">{p.costPerCycle}</td>
+
+                {/* Absorbency */}
+                <td className="py-3 px-5 text-center text-ink-600">
+                  <div className="text-justify max-w-xl mx-auto">
+                    {p.absorbency}
+                  </div>
+                </td>
+
+                {/* Reusable */}
+                <td className="py-3 px-5 text-center">
+                  {p.reusable ? (
+                    <Check
+                      size={16}
+                      className="text-teal-500 mx-auto"
+                    />
+                  ) : (
+                    <X
+                      size={16}
+                      className="text-ink-300 mx-auto"
+                    />
+                  )}
+                </td>
               </tr>
             ))}
           </tbody>

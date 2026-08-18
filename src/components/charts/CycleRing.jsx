@@ -72,9 +72,9 @@ export default function CycleRing({
       </div>
 
       {/* Phase */}
-      <p className="text-lg font-semibold text-gray-900">
-  {phase} phase
-</p>
+      <p className="w-full text-center text-lg font-semibold text-gray-900">
+        {phase} phase
+      </p>
 
 <div className="mt-5 bg-rose-50 rounded-2xl px-6 py-4 text-center">
   <p className="text-sm uppercase tracking-wider text-rose-500 font-semibold">

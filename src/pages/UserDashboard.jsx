@@ -22,8 +22,7 @@ function getGreeting() {
 
   if (hour < 12) return 'Good morning'
   if (hour < 17) return 'Good afternoon'
-  if (hour < 21) return 'Good evening'
-  return 'Good night'
+  if (hour < 24) return 'Good evening'
 }
 
 export default function UserDashboard() {
@@ -62,31 +61,16 @@ export default function UserDashboard() {
       <div className="grid lg:grid-cols-[0.75fr_1.5fr] gap-6">
 
   {/* LEFT - CYCLE RING */}
-  <Card className="flex flex-col items-center justify-center !p-8">
+  <Card className="flex flex-col items-center justify-center !p-7">
     <CycleRing
       cycleDay={cycle.cycleDay}
       cycleLength={cycle.cycleLength}
       periodLength={cycle.periodLength}
       phaseKey={cycle.phaseKey}
       nextPeriodDate={cycle.nextPeriodDate}
-    />
-
-    <p className="text-sm text-ink-600 font-medium mt-4">
-      {cycle.phase.label} phase
-    </p>
-
-    <div className="mt-4 text-center">
-      <p className="text-xs text-ink-400 uppercase tracking-wide">
-        Next Period
-      </p>
-
-      <p className="text-lg font-semibold text-rose-600 mt-1">
-        {formatDate(cycle.nextPeriodDate)}
-      </p>
-    </div>
+      />
+    
   </Card>
-
-
   {/* RIGHT - TODAY'S CHECK-IN */}
   <Card className="!p-6">
 
