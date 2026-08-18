@@ -267,9 +267,7 @@ export default function UserDashboard() {
       </p>
 
       <Link to="/insights" className="inline-block mt-4">
-        <Button size="sm">
-          ✨ Ask Saathi AI
-        </Button>
+        
       </Link>
     </div>
 <div className="hidden sm:flex w-36 h-36 rounded-3xl bg-rose-50 items-center justify-center shrink-0 overflow-hidden">

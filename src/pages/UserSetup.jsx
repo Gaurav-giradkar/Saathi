@@ -134,16 +134,6 @@ export default function UserSetup() {
           </div>
         </Card>
 
-        <Card>
-          <SectionHeader icon={Bell} title="Lifestyle & preferences" index={4} />
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-medium text-ink-800 text-sm">Cycle & symptom notifications</p>
-              <p className="text-xs text-ink-500">Reminders for upcoming periods and daily logging.</p>
-            </div>
-            <Toggle checked={notifications} onChange={setNotifications} />
-          </div>
-        </Card>
 
         <Button type="submit" size="lg" fullWidth icon={ArrowRight} iconPosition="right" disabled={loading}>
           {loading ? 'Saving…' : 'Save & Continue'}

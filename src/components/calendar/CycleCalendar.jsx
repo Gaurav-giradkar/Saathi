@@ -90,7 +90,7 @@ export default function CycleCalendar({ cycleSetup, selectedDate, onSelectDay })
 
   return (
     <div className="w-full">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-2">
         <button
           type="button"
           onClick={() =>
@@ -118,18 +118,18 @@ export default function CycleCalendar({ cycleSetup, selectedDate, onSelectDay })
         </button>
       </div>
 
-      <div className="grid grid-cols-7 mb-1">
+      <div className="grid grid-cols-7 mb-1 max-w-md mx-auto">
         {WEEKDAYS.map((weekday, index) => (
           <div
             key={`${weekday}-${index}`}
-            className="text-center text-[11px] font-semibold text-ink-400 uppercase py-1.5"
+            className="text-center text-[10px] font-semibold text-ink-400 uppercase py-1"
           >
             {weekday}
           </div>
         ))}
       </div>
 
-      <div className="flex flex-col gap-0.5 max-w-3xl mx-auto">
+      <div className="flex flex-col gap-0.5 max-w-md  mx-auto">
           {weeks.map((row, rowIndex) => (
           <div key={rowIndex} className="grid grid-cols-7 gap-0.5">
             {row.map((date, dayIndex) => {
@@ -147,11 +147,11 @@ export default function CycleCalendar({ cycleSetup, selectedDate, onSelectDay })
                     onClick={() => onSelectDay?.(date)}
                     aria-label={`Select ${date.toDateString()}`}
                     className={[
-                      'w-full h-full max-w-[30px] max-h-[30px]',
-                      'sm:max-w-[32px] sm:max-h-[32px]',
-                      'lg:max-w-[34px] lg:max-h-[34px]',
+                      'w-full h-full max-w-[22px] max-h-[22px]',
+                      'sm:max-w-[24px] sm:max-h-[24px]',
+                      'lg:max-w-[26px] lg:max-h-[26px]',
                       'rounded-full flex items-center justify-center',
-                      'text-[13px] sm:text-sm font-semibold transition-transform hover:scale-105',
+                      'text-[10px] sm:text-sm font-semibold transition-transform hover:scale-105',
                       isToday(date) ? 'ring-2 ring-offset-2 ring-ink-800' : '',
                       isSelected(date) ? 'ring-2 ring-offset-2 ring-brand-coral' : '',
                     ].join(' ')}

@@ -31,10 +31,11 @@ export default function CycleTracker() {
         <StatCard icon={TrendingUp} label="Ovulation day" value={`Day ${cycle.ovulationDay}`} accent="amber" />
       </div>
 
-      <Card>
-        <CycleCalendar cycleSetup={cycle} />
-      </Card>
-
+      <div className="max-w-[780px]">
+  <Card className="py-4">
+    <CycleCalendar cycleSetup={cycle} />
+  </Card>
+</div>
       <Card>
         <h2 className="font-display font-semibold text-ink-900 text-lg mb-1">Cycle history</h2>
         <p className="text-sm text-ink-500 mb-4">Length of your last {cycle.history.length} cycles, in days.</p>
