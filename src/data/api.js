@@ -8,7 +8,7 @@ import {
 } from 'firebase/firestore'
 import { auth, db, firebaseConfigured, firebaseConfigError } from '../lib/firebase.js'
 import {
-  PHASES, INSIGHT_TEMPLATES, WELLNESS_CATEGORIES, SUPPORT_SUGGESTIONS,
+  PHASES, INSIGHT_TEMPLATES, WELLNESS_CATEGORIES, SUPPORT_SUGGESTIONS, SYMPTOM_OPTIONS,
   SHARING_CATEGORIES, getPhaseForDay,
 } from './mockData.js'
 
@@ -122,7 +122,53 @@ export async function getHealthLogs() {
   return Object.fromEntries(snapshots.docs.map((entry) => [entry.id, entry.data()]))
 }
 export async function getHealthData(date = todayISO()) { const user = requireUser(); const snapshot = await getDoc(doc(db, 'users', user.uid, 'healthEntries', date)); return snapshot.exists() ? snapshot.data() : null }
-export async function saveHealthLog(date, entry) { const user = requireUser(); const data = { ...entry, date, updatedAt: serverTimestamp() }; await setDoc(doc(db, 'users', user.uid, 'healthEntries', date), data, { merge: true }); await publishSharedProjection(user.uid); return { ...entry, date } }
+export async function getCustomSymptoms() {
+  const user = requireUser()
+  const snapshot = await getDoc(doc(db, 'users', user.uid))
+  return Array.isArray(snapshot.data()?.customSymptoms) ? snapshot.data().customSymptoms : []
+}
+export async function addCustomSymptom(name) {
+  const user = requireUser()
+  const symptom = String(name || '').trim().replace(/\s+/g, ' ')
+  if (!symptom) throw new Error('Enter a symptom name.')
+  if (symptom.length > 120) throw new Error('Keep a custom symptom to 120 characters or fewer.')
+  const profileRef = doc(db, 'users', user.uid)
+  const snapshot = await getDoc(profileRef)
+  const customSymptoms = Array.isArray(snapshot.data()?.customSymptoms) ? snapshot.data().customSymptoms : []
+  const knownSymptoms = [...SYMPTOM_OPTIONS, ...customSymptoms]
+  const existing = knownSymptoms.find((item) => item.toLowerCase() === symptom.toLowerCase())
+  if (existing) return { symptom: existing, customSymptoms, added: false }
+  const next = [...customSymptoms, symptom]
+  await setDoc(profileRef, { customSymptoms: next, updatedAt: serverTimestamp() }, { merge: true })
+  return { symptom, customSymptoms: next, added: true }
+}
+function normaliseHealthEntry(entry) {
+  const customTextFields = ['otherSymptom', 'otherPainLocation', 'otherPainType', 'otherExercise', 'otherMeal', 'otherCraving', 'otherProtection', 'otherProduct', 'otherRelief']
+  return customTextFields.reduce((data, field) => ({ ...data, [field]: String(data[field] || '').trim().replace(/\s+/g, ' ') }), { ...entry })
+}
+function validateHealthEntry(entry) {
+  const numberInRange = (value, min, max, label) => {
+    if (value == null || value === '') return
+    const number = Number(value)
+    if (!Number.isFinite(number) || number < min || number > max) throw new Error(`${label} must be between ${min} and ${max}.`)
+  }
+  numberInRange(entry.pain, 0, 10, 'Pain level')
+  numberInRange(entry.sleep, 0, 16, 'Sleep duration')
+  numberInRange(entry.waterLiters, 0, 10, 'Water intake')
+  numberInRange(entry.exerciseMinutes, 0, 1440, 'Exercise duration')
+  const requiredOtherText = [
+    ['exerciseActivities', 'Other', 'otherExercise', 'Enter the other exercise.'],
+    ['meals', 'Other', 'otherMeal', 'Enter the other meal or food.'],
+    ['cravings', 'Other', 'otherCraving', 'Enter the other craving.'],
+    ['protectionUsed', 'Other', 'otherProtection', 'Enter the other protection used.'],
+    ['productOptions', 'Other', 'otherProduct', 'Enter the other product used.'],
+    ['relief', 'Other', 'otherRelief', 'Enter the other relief used.'],
+  ]
+  requiredOtherText.forEach(([selectionField, otherOption, textField, message]) => {
+    if (Array.isArray(entry[selectionField]) && entry[selectionField].includes(otherOption) && !entry[textField]) throw new Error(message)
+  })
+}
+export async function saveHealthLog(date, entry) { const normalisedEntry = normaliseHealthEntry(entry); validateHealthEntry(normalisedEntry); const user = requireUser(); const data = { ...normalisedEntry, date, updatedAt: serverTimestamp() }; await setDoc(doc(db, 'users', user.uid, 'healthEntries', date), data, { merge: true }); await publishSharedProjection(user.uid); return { ...normalisedEntry, date } }
 export async function getInsights() { const cycle = await getCycleData(); return { insights: INSIGHT_TEMPLATES.map((item, id) => ({ id, ...item })), painTrend: [], cycleInfo: cycle } }
 export async function getRecommendations() { const cycle = await getCycleData(); return { phaseKey: cycle.phaseKey, categories: WELLNESS_CATEGORIES } }
 
