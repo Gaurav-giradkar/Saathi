@@ -26,7 +26,10 @@ import SupporterConnection from './pages/SupporterConnection.jsx'
 import SharingPermissions from './pages/SharingPermissions.jsx'
 
 import SupporterDashboard from './pages/SupporterDashboard.jsx'
-import SupporterGuidance from './pages/SupporterGuidance.jsx'
+import SupporterAIInsights from './pages/SupporterAIInsights.jsx'
+import SupporterWellness from './pages/SupporterWellness.jsx'
+import SupporterEducation from './pages/SupporterEducation.jsx'
+import SupporterProductAdvisor from './pages/SupporterProductAdvisor.jsx'
 
 export default function App() {
   return (
@@ -75,11 +78,12 @@ export default function App() {
         >
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<SupporterDashboard />} />
-          <Route path="guidance" element={<SupporterGuidance />} />
+          <Route path="insights" element={<SupporterAIInsights />} />
+          <Route path="wellness" element={<SupporterWellness />} />
+          <Route path="education" element={<SupporterEducation />} />
+          <Route path="products" element={<SupporterProductAdvisor />} />
           <Route path="connection" element={<SupporterConnection />} />
-          <Route path="education" element={<EducationCenter />} />
         </Route>
-
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

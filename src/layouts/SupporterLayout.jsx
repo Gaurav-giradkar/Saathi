@@ -1,15 +1,19 @@
 import React from 'react'
 import { Outlet } from 'react-router-dom'
-import { Home, HeartHandshake, BookOpen, Users } from 'lucide-react'
+import {
+  Home, Sparkles, Leaf, BookOpen, ShoppingBag, Users,
+} from 'lucide-react'
 import Sidebar from '../components/common/Sidebar.jsx'
 import Navbar from '../components/common/Navbar.jsx'
 import BottomNav from '../components/common/BottomNav.jsx'
 
 export const SUPPORTER_NAV_ITEMS = [
   { to: '/supporter/dashboard', label: 'Dashboard', shortLabel: 'Home', icon: Home, end: true },
-  { to: '/supporter/guidance', label: 'How to Help', shortLabel: 'Guidance', icon: HeartHandshake },
-  { to: '/supporter/education', label: 'education', shortLabel: 'education', icon: BookOpen },
-  { to: '/supporter/connection', label: 'Connection', shortLabel: 'Connect', icon: Users },
+  { to: '/supporter/insights', label: 'AI Insights', shortLabel: 'Insights', icon: Sparkles },
+  { to: '/supporter/wellness', label: 'Wellness', shortLabel: 'Wellness', icon: Leaf },
+  { to: '/supporter/education', label: 'Education', shortLabel: 'Education', icon: BookOpen },
+  { to: '/supporter/products', label: 'Product Advisor', shortLabel: 'Products', icon: ShoppingBag },
+  { to: '/supporter/connection', label: 'Connect', shortLabel: 'Connect', icon: Users },
 ]
 
 export default function SupporterLayout() {
@@ -26,3 +30,4 @@ export default function SupporterLayout() {
     </div>
   )
 }
+
