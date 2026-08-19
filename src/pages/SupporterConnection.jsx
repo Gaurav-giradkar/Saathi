@@ -1,18 +1,13 @@
 import React, { useEffect, useState } from 'react'
 import {
-  QrCode,
-  Copy,
-  CheckCircle2,
-  Link2,
-  UserX,
-  RefreshCw,
+  QrCode, Copy, CheckCircle2, Link2, UserX, RefreshCw,
+  AlertCircle, Check, Users, Clock,
 } from 'lucide-react'
-
+import { QRCodeSVG } from 'qrcode.react'
 import Card from '../components/common/Card.jsx'
 import Button from '../components/common/Button.jsx'
 import Input from '../components/common/Input.jsx'
 import Modal from '../components/common/Modal.jsx'
-
 import {
   generateInviteCode,
   submitInviteCode,
@@ -20,13 +15,11 @@ import {
   getConnectionStatus,
   disconnectSupporter,
 } from '../data/api.js'
-
 import { useApp } from '../context/AppContext.jsx'
-import { QRCodeSVG } from 'qrcode.react'
 
 function QRCodeDisplay({ inviteCode }) {
   return (
-    <div className="w-40 h-40 bg-white rounded-xl border border-ink-100 p-3 flex items-center justify-center">
+    <div className="w-44 h-44 bg-white rounded-2xl border-2 border-ink-100 p-3.5 flex items-center justify-center shadow-sm">
       <QRCodeSVG
         value={inviteCode}
         size={136}
@@ -41,26 +34,25 @@ function QRCodeDisplay({ inviteCode }) {
 
 export default function SupporterConnection() {
   const { auth, showToast } = useApp()
-
   const isSupporter = auth.accountType === 'supporter'
 
   const [connection, setConnection] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [actionLoading, setActionLoading] = useState(false)
   const [fetchError, setFetchError] = useState(null)
   const [codeInput, setCodeInput] = useState('')
   const [copied, setCopied] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
-  const [loading, setLoading] = useState(false)
 
   const refresh = async () => {
     try {
       setFetchError(null)
-
       const data = await getConnectionStatus()
       setConnection(data)
     } catch (err) {
-      setFetchError(
-        err?.message || 'Failed to load connection status.'
-      )
+      setFetchError(err?.message || 'Failed to load connection status.')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -68,372 +60,349 @@ export default function SupporterConnection() {
     refresh()
   }, [])
 
+  // ----------------------------------------------------
+  // OWNER: Generate Invitation Code
+  // ----------------------------------------------------
   const handleGenerate = async () => {
     try {
-      setLoading(true)
+      setActionLoading(true)
       setFetchError(null)
-
       await generateInviteCode()
       await refresh()
+      showToast('Invitation code generated!')
     } catch (err) {
-      showToast(
-        err?.message || 'Failed to generate invitation.',
-        'error'
-      )
+      showToast(err?.message || 'Failed to generate invitation.', 'error')
     } finally {
-      setLoading(false)
+      setActionLoading(false)
     }
   }
 
+  // ----------------------------------------------------
+  // Copy Code to Clipboard
+  // ----------------------------------------------------
   const handleCopy = async () => {
     const inviteCode = connection?.inviteCode || ''
-
     if (!inviteCode) return
 
     try {
       await navigator.clipboard.writeText(inviteCode)
       setCopied(true)
-
+      showToast('Invitation code copied to clipboard!')
       setTimeout(() => {
         setCopied(false)
-      }, 1500)
+      }, 2000)
     } catch {
-      showToast('Unable to copy the invitation code.', 'error')
+      showToast('Unable to copy code to clipboard.', 'error')
     }
   }
 
-  const handleSubmitCode = async (event) => {
-    event.preventDefault()
-
-    if (!codeInput.trim()) return
+  // ----------------------------------------------------
+  // SUPPORTER: Submit Invitation Code
+  // ----------------------------------------------------
+  const handleSubmitCode = async (e) => {
+    e.preventDefault()
+    const cleanCode = codeInput.trim().toUpperCase()
+    if (!cleanCode) return
 
     try {
-      setLoading(true)
+      setActionLoading(true)
       setFetchError(null)
-
-      await submitInviteCode(codeInput.trim().toUpperCase())
+      await submitInviteCode(cleanCode)
       setCodeInput('')
-
       await refresh()
-
       showToast('Connection request sent.')
     } catch (err) {
-      showToast(
-        err?.message || 'Failed to submit invitation code.',
-        'error'
-      )
+      showToast(err?.message || 'Failed to submit invitation code.', 'error')
     } finally {
-      setLoading(false)
+      setActionLoading(false)
     }
   }
 
-  const handleSimulateApproval = async () => {
+  // ----------------------------------------------------
+  // OWNER: Approve Incoming Request
+  // ----------------------------------------------------
+  const handleApprove = async () => {
     try {
-      setLoading(true)
+      setActionLoading(true)
       setFetchError(null)
-
       await approveConnection()
       await refresh()
-
-      showToast('Connection successful!')
+      showToast('Connection approved successfully!')
     } catch (err) {
-      showToast(
-        err?.message || 'Failed to approve connection.',
-        'error'
-      )
+      showToast(err?.message || 'Failed to approve connection.', 'error')
     } finally {
-      setLoading(false)
+      setActionLoading(false)
     }
   }
 
+  // ----------------------------------------------------
+  // Disconnect / Revoke Connection
+  // ----------------------------------------------------
   const handleDisconnect = async () => {
     try {
-      setLoading(true)
+      setActionLoading(true)
       setFetchError(null)
-
       await disconnectSupporter()
       await refresh()
-
       setConfirmOpen(false)
-
-      showToast('Supporter removed', 'info')
+      showToast('Connection removed.', 'info')
     } catch (err) {
-      showToast(
-        err?.message || 'Failed to remove connection.',
-        'error'
-      )
+      showToast(err?.message || 'Failed to remove connection.', 'error')
     } finally {
-      setLoading(false)
+      setActionLoading(false)
     }
+  }
+
+  if (loading) {
+    return <div className="animate-pulse text-ink-400 text-sm py-20 text-center">Loading connection status…</div>
   }
 
   if (fetchError) {
     return (
       <div className="text-center py-20 flex flex-col items-center gap-3">
-        <p className="text-rose-500 font-medium">
-          Could not load connection status
-        </p>
-
-        <p className="text-ink-400 text-sm max-w-sm">
-          {fetchError}
-        </p>
-
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={refresh}
-        >
+        <AlertCircle size={36} className="text-rose-500" />
+        <p className="text-rose-600 font-medium">Could not load connection status</p>
+        <p className="text-ink-500 text-sm max-w-sm">{fetchError}</p>
+        <Button variant="outline" size="sm" icon={RefreshCw} onClick={refresh}>
           Retry
         </Button>
       </div>
     )
   }
 
-  if (!connection) {
-    return (
-      <div className="animate-pulse text-ink-400 text-sm py-20 text-center">
-        Loading…
-      </div>
-    )
-  }
+  const connStatus = connection?.status || 'none'
+  const isOwner = !isSupporter
 
   return (
     <div className="max-w-xl mx-auto flex flex-col gap-6 animate-fadeIn">
-
       {/* Header */}
       <div>
         <h1 className="font-display text-2xl sm:text-3xl font-semibold text-ink-900">
-          Supporter connection
+          {isSupporter ? 'Connect with user' : 'Supporter connection'}
         </h1>
-
         <p className="text-ink-500 text-sm mt-1">
           {isSupporter
-            ? 'Connect to the person you\'re supporting.'
+            ? 'Connect to the person you are supporting using their unique invitation code.'
             : 'Invite a trusted person to see what you choose to share.'}
         </p>
       </div>
 
-      {/* CONNECTED */}
-      {connection.status === 'connected' && (
-        <Card className="flex flex-col items-center text-center gap-3 !py-10">
-
+      {/* ================================================================= */}
+      {/* CASE 1: CONNECTED (ACTIVE) */}
+      {/* ================================================================= */}
+      {connStatus === 'connected' && (
+        <Card className="flex flex-col items-center text-center gap-4 !py-10">
           <div className="w-14 h-14 rounded-full bg-teal-50 flex items-center justify-center">
-            <CheckCircle2
-              size={28}
-              className="text-teal-600"
-            />
+            <CheckCircle2 size={32} className="text-teal-600" />
           </div>
 
-          <h2 className="font-display font-semibold text-ink-900 text-lg">
-            Connected to {connection.connectedPersonName}
-          </h2>
+          <div>
+            <h2 className="font-display font-semibold text-ink-900 text-xl">
+              Connected to {connection.connectedPersonName}
+            </h2>
+            <p className="text-sm text-ink-500 max-w-sm mt-1">
+              {isSupporter
+                ? 'You will now see the updates they choose to share on your Dashboard and AI Insights.'
+                : 'They can now view the health metrics you have allowed in your Sharing Permissions.'}
+            </p>
+          </div>
 
-          <p className="text-sm text-ink-500 max-w-xs">
-            {isSupporter
-              ? 'You will now see the updates they choose to share, right on your dashboard.'
-              : 'They can now see whatever you\'ve allowed in your sharing permissions.'}
-          </p>
-
-          <div className="flex gap-3 mt-2">
-
-            <Button
-              variant="outline"
-              size="sm"
-              icon={RefreshCw}
-              onClick={handleGenerate}
-              disabled={isSupporter || loading}
-            >
-              Reconnect
-            </Button>
+          <div className="flex gap-3 mt-3">
+            {isOwner && (
+              <Button
+                variant="outline"
+                size="sm"
+                icon={RefreshCw}
+                onClick={handleGenerate}
+                disabled={actionLoading}
+              >
+                Reconnect
+              </Button>
+            )}
 
             <Button
               variant="danger"
               size="sm"
               icon={UserX}
               onClick={() => setConfirmOpen(true)}
-              disabled={loading}
+              disabled={actionLoading}
             >
-              Remove
+              Disconnect
             </Button>
-
           </div>
         </Card>
       )}
 
-      {/* PENDING */}
-      {connection.status === 'pending' && (
-        <Card className="flex flex-col items-center text-center gap-4 !py-10">
-
+      {/* ================================================================= */}
+      {/* CASE 2: PENDING */}
+      {/* ================================================================= */}
+      {connStatus === 'pending' && (
+        <Card className="flex flex-col items-center text-center gap-5 !py-8">
           <div className="w-14 h-14 rounded-full bg-amber-50 flex items-center justify-center animate-pulse">
-            <Link2
-              size={26}
-              className="text-amber-500"
-            />
+            <Clock size={28} className="text-amber-600" />
           </div>
 
-          <h2 className="font-display font-semibold text-ink-900 text-lg">
-            Connection request pending
-          </h2>
+          <div>
+            <h2 className="font-display font-semibold text-ink-900 text-xl">
+              Connection request pending
+            </h2>
+            <p className="text-sm text-ink-500 max-w-sm mt-1">
+              {isSupporter
+                ? 'Your request has been sent. Waiting for the owner to approve your request.'
+                : connection.hasSupporterJoined
+                  ? `Supporter request received from ${connection.connectedPersonName}!`
+                  : 'Share your invitation code or QR code with your supporter.'}
+            </p>
+          </div>
 
-          <p className="text-sm text-ink-500 max-w-sm">
-            {isSupporter
-              ? 'Waiting for approval on the other side.'
-              : 'Share your code or QR with them, then approve their request once they enter it.'}
-          </p>
+          {/* Owner View: Show QR and Copyable Code */}
+          {isOwner && connection.inviteCode && (
+            <div className="flex flex-col items-center gap-4 my-1">
+              <QRCodeDisplay inviteCode={connection.inviteCode} />
 
-          {/* OWNER VIEW */}
-          {!isSupporter && connection.inviteCode && (
-            <>
-              <QRCodeDisplay
-                inviteCode={connection.inviteCode}
-              />
-
-              <div className="flex items-center gap-2 bg-rose-50 rounded-xl px-4 py-2.5">
-
-                <span className="font-mono font-bold text-lg tracking-widest text-rose-600">
+              <div className="flex items-center gap-3 bg-rose-50/80 border border-rose-200/60 rounded-xl px-5 py-2.5">
+                <span className="font-mono font-bold text-xl tracking-widest text-rose-700">
                   {connection.inviteCode}
                 </span>
-
                 <button
                   type="button"
                   onClick={handleCopy}
-                  className="text-rose-500 hover:text-rose-600"
+                  className="p-1.5 rounded-lg hover:bg-rose-100/80 text-rose-600 transition-colors"
                   aria-label="Copy invitation code"
                 >
-                  <Copy size={16} />
+                  {copied ? <Check size={18} className="text-teal-600" /> : <Copy size={18} />}
                 </button>
-
-                {copied && (
-                  <span className="text-xs text-teal-600 font-medium">
-                    Copied
-                  </span>
-                )}
-
               </div>
-            </>
+
+              <p className="text-xs text-ink-400 max-w-xs">
+                Your supporter can enter this code in their app or scan this QR code to connect.
+              </p>
+            </div>
           )}
 
-          <Button
-            onClick={handleSimulateApproval}
-            disabled={loading}
-          >
-            {loading
-              ? 'Connecting…'
-              : isSupporter
-                ? 'Simulate: they approve'
-                : 'Approve connection'}
-          </Button>
+          {/* Action buttons based on role */}
+          <div className="flex gap-3 mt-1">
+            {isOwner && connection.hasSupporterJoined && (
+              <Button
+                variant="primary"
+                onClick={handleApprove}
+                disabled={actionLoading}
+              >
+                {actionLoading ? 'Approving…' : 'Approve connection'}
+              </Button>
+            )}
 
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setConfirmOpen(true)}
+              disabled={actionLoading}
+            >
+              Cancel request
+            </Button>
+          </div>
         </Card>
       )}
 
-      {/* OWNER — NO CONNECTION */}
-      {connection.status === 'none' && !isSupporter && (
+      {/* ================================================================= */}
+      {/* CASE 3: NO CONNECTION (OWNER) */}
+      {/* ================================================================= */}
+      {connStatus === 'none' && isOwner && (
         <Card className="flex flex-col items-center text-center gap-4 !py-10">
-
-          <div className="w-40 h-40 bg-white rounded-xl border border-ink-100 flex items-center justify-center">
-            <QrCode
-              size={72}
-              className="text-ink-300"
-            />
+          <div className="w-36 h-36 bg-white rounded-2xl border border-ink-100 flex items-center justify-center shadow-sm">
+            <QrCode size={64} className="text-ink-300" />
           </div>
 
-          <p className="text-sm text-ink-500 max-w-sm">
-            Generate an invitation code to create a QR code
-            your supporter can scan. They'll only see what
-            your sharing permissions allow.
+          <p className="text-sm text-ink-600 max-w-sm leading-relaxed">
+            Generate an invitation code to create a QR code your supporter can scan. They will only see what your sharing permissions allow.
           </p>
 
           <Button
             icon={QrCode}
             onClick={handleGenerate}
-            disabled={loading}
+            disabled={actionLoading}
+            size="lg"
           >
-            {loading
-              ? 'Generating…'
-              : 'Generate invitation code'}
+            {actionLoading ? 'Generating…' : 'Generate invitation code'}
           </Button>
-
         </Card>
       )}
 
-      {/* SUPPORTER — NO CONNECTION */}
-      {connection.status === 'none' && isSupporter && (
+      {/* ================================================================= */}
+      {/* CASE 4: NO CONNECTION (SUPPORTER) */}
+      {/* ================================================================= */}
+      {connStatus === 'none' && isSupporter && (
         <Card className="!py-8">
-
           <form
             onSubmit={handleSubmitCode}
-            className="flex flex-col gap-4 items-center text-center"
+            className="flex flex-col gap-4 items-center text-center max-w-md mx-auto"
           >
-
             <div className="w-14 h-14 rounded-full bg-teal-50 flex items-center justify-center mb-1">
-              <Link2
-                size={26}
-                className="text-teal-600"
-              />
+              <Link2 size={28} className="text-teal-600" />
             </div>
 
-            <p className="text-sm text-ink-500 max-w-sm">
-              Enter the invitation code shared with you
-              to request a connection.
-            </p>
+            <div>
+              <h2 className="font-display font-semibold text-ink-900 text-lg">
+                Enter Invitation Code
+              </h2>
+              <p className="text-sm text-ink-500 mt-1">
+                Enter the 6-character invitation code shared by the person you are supporting.
+              </p>
+            </div>
 
-            <Input
-              value={codeInput}
-              onChange={(event) =>
-                setCodeInput(event.target.value)
-              }
-              placeholder="e.g. 7F3KQ2"
-              className="text-center font-mono tracking-widest text-lg"
-              required
-            />
+            <div className="w-full max-w-xs">
+              <Input
+                value={codeInput}
+                onChange={(e) => setCodeInput(e.target.value.toUpperCase())}
+                placeholder="e.g. 7F3KQ2"
+                className="text-center font-mono tracking-widest text-xl font-bold uppercase"
+                maxLength={8}
+                required
+              />
+            </div>
 
             <Button
               type="submit"
               variant="teal"
-              disabled={loading || !codeInput.trim()}
+              size="lg"
+              disabled={actionLoading || !codeInput.trim()}
+              className="w-full max-w-xs"
             >
-              {loading
-                ? 'Sending…'
-                : 'Send connection request'}
+              {actionLoading ? 'Sending request…' : 'Send connection request'}
             </Button>
-
           </form>
         </Card>
       )}
 
-      {/* REMOVE CONNECTION MODAL */}
+      {/* ================================================================= */}
+      {/* REMOVE / DISCONNECT CONFIRMATION MODAL */}
+      {/* ================================================================= */}
       <Modal
         open={confirmOpen}
         onClose={() => setConfirmOpen(false)}
         title="Remove this connection?"
         footer={
-          <>
+          <div className="flex gap-2 justify-end">
             <Button
               variant="ghost"
               onClick={() => setConfirmOpen(false)}
             >
               Cancel
             </Button>
-
             <Button
               variant="danger"
               onClick={handleDisconnect}
-              disabled={loading}
+              disabled={actionLoading}
             >
-              Remove
+              {actionLoading ? 'Removing…' : 'Remove connection'}
             </Button>
-          </>
+          </div>
         }
       >
-        <p className="text-sm text-ink-600">
-          {connection.connectedPersonName || 'This connection'}
-          {' '}
-          will no longer be able to see any shared information.
-          You can reconnect later with a new code.
+        <p className="text-sm text-ink-600 leading-relaxed">
+          {connection?.connectedPersonName || 'This connection'} will no longer have access to any shared updates. You can generate a new connection at any time.
         </p>
       </Modal>
-
     </div>
   )
 }

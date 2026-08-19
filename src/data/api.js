@@ -38,7 +38,7 @@ async function publishSharedProjection(ownerUid) {
   const health = await getHealthData().catch(() => null)
   const connections = await getDocs(query(collection(db, 'connections'), where('ownerUid', '==', ownerUid), where('status', '==', 'active')))
   const shared = {
-    cyclePhase: permissions.cyclePhase ? cycle.phase.label : null,
+    cyclePhase: permissions.cyclePhase ? (cycle.phase?.label || null) : null,
     periodStatus: permissions.periodStatus ? (cycle.isOnPeriod ? 'On period' : 'Not on period') : null,
     expectedPeriod: permissions.expectedPeriod ? cycle.nextPeriodDate : null,
     painLevel: permissions.painLevel ? (health?.pain ?? null) : null,
@@ -176,10 +176,22 @@ export async function getSharingPermissions() { const data = await getUserData()
 export async function updateSharingPermissions(key, value) { const user = requireUser(); const permissions = await getSharingPermissions(); permissions[key] = value; await setDoc(doc(db, 'users', user.uid), { sharingPermissions: permissions, updatedAt: serverTimestamp() }, { merge: true }); await publishSharedProjection(user.uid); return permissions }
 
 const inviteCode = () => crypto.getRandomValues(new Uint32Array(1))[0].toString(36).slice(-6).toUpperCase()
+
 export async function generateInviteCode() {
   const user = requireUser()
-
   const code = inviteCode()
+
+  let ownerName = user.displayName || 'Connection'
+  try {
+    const userDoc = await getDoc(doc(db, 'users', user.uid))
+    if (userDoc.exists() && userDoc.data()?.name) {
+      ownerName = userDoc.data().name
+    }
+  } catch {
+    // ignore
+  }
+
+  const permissions = await getSharingPermissions().catch(() => ({}))
 
   const connectionRef = doc(collection(db, 'connections'))
   const inviteRef = doc(db, 'inviteCodes', code)
@@ -188,10 +200,12 @@ export async function generateInviteCode() {
 
   batch.set(connectionRef, {
     ownerUid: user.uid,
+    ownerName,
     supporterUid: null,
+    supporterName: null,
     status: 'pending',
     inviteCode: code,
-    sharing: await getSharingPermissions(),
+    sharing: permissions,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   })
@@ -206,9 +220,9 @@ export async function generateInviteCode() {
 
   return code
 }
+
 export async function submitInviteCode(code) {
   const user = requireUser()
-
   const normalizedCode = String(code || '').trim().toUpperCase()
 
   if (!normalizedCode) {
@@ -216,20 +230,30 @@ export async function submitInviteCode(code) {
   }
 
   const inviteRef = doc(db, 'inviteCodes', normalizedCode)
-  const inviteSnap = await getDoc(inviteRef)
+  const inviteSnap = await getDoc(inviteRef).catch((err) => {
+    if (err?.code === 'permission-denied') {
+      throw new Error('Unable to resolve invitation. Please verify the code or generate a fresh invitation.')
+    }
+    throw err
+  })
 
   if (!inviteSnap.exists()) {
-    throw new Error('That invitation is invalid or has expired.')
+    throw new Error('That invitation code was not found or has expired. Please generate a new code.')
   }
 
   const invite = inviteSnap.data()
 
-  if (invite.status !== 'pending') {
+  if (invite.status !== 'pending' || !invite.connectionId) {
     throw new Error('That invitation is no longer active.')
   }
 
   const connectionRef = doc(db, 'connections', invite.connectionId)
-  const connectionSnap = await getDoc(connectionRef)
+  const connectionSnap = await getDoc(connectionRef).catch((err) => {
+    if (err?.code === 'permission-denied') {
+      throw new Error('Permission denied reading connection. Please ensure a new invitation was generated.')
+    }
+    throw err
+  })
 
   if (!connectionSnap.exists()) {
     throw new Error('The connection could not be found.')
@@ -245,8 +269,23 @@ export async function submitInviteCode(code) {
     throw new Error('This invitation has already been used.')
   }
 
+  if (connection.ownerUid === user.uid) {
+    throw new Error('You cannot connect to your own invitation code.')
+  }
+
+  let supporterName = user.displayName || 'Supporter'
+  try {
+    const userDoc = await getDoc(doc(db, 'users', user.uid))
+    if (userDoc.exists() && userDoc.data()?.name) {
+      supporterName = userDoc.data().name
+    }
+  } catch {
+    // ignore
+  }
+
   await updateDoc(connectionRef, {
     supporterUid: user.uid,
+    supporterName,
     updatedAt: serverTimestamp(),
   })
 
@@ -255,24 +294,81 @@ export async function submitInviteCode(code) {
     connectionId: connectionRef.id,
   }
 }
-export async function approveConnection() { const user = requireUser(); const result = await getDocs(query(collection(db, 'connections'), where('ownerUid', '==', user.uid), where('status', '==', 'pending'), limit(1))); if (result.empty) throw new Error('No pending connection request was found.'); await updateDoc(result.docs[0].ref, { status: 'active', approvedAt: serverTimestamp(), updatedAt: serverTimestamp() }); await publishSharedProjection(user.uid); return result.docs[0].data() }
+
+export async function approveConnection() {
+  const user = requireUser()
+  const result = await getDocs(query(
+    collection(db, 'connections'),
+    where('ownerUid', '==', user.uid),
+    where('status', '==', 'pending'),
+    limit(1)
+  ))
+  if (result.empty) throw new Error('No pending connection request was found.')
+  const connectionDoc = result.docs[0]
+  const data = connectionDoc.data()
+  if (!data.supporterUid) {
+    throw new Error('Waiting for a supporter to enter your invitation code first.')
+  }
+  await updateDoc(connectionDoc.ref, {
+    status: 'active',
+    approvedAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  })
+  await publishSharedProjection(user.uid)
+  return data
+}
+
 export async function getConnectionStatus() {
   const user = requireUser()
   try {
-    const result = await getDocs(query(collection(db, 'connections'), where('ownerUid', '==', user.uid), limit(1)))
-    const supporter = await getDocs(query(collection(db, 'connections'), where('supporterUid', '==', user.uid), limit(1)))
-    const item = result.docs[0] || supporter.docs[0]
-    if (!item) return { status: 'none' }
-    const data = item.data()
-    // Revoked or unknown status → treat as not connected
-    if (!data.status || data.status === 'revoked') return { status: 'none' }
-    const otherId = data.ownerUid === user.uid ? data.supporterUid : data.ownerUid
-    let connectedPersonName = ''
-    if (otherId) { const p = await getDoc(doc(db, 'users', otherId)); connectedPersonName = p.data()?.name || 'your connection' }
-    return { ...data, status: data.status === 'active' ? 'connected' : 'pending', connectedPersonName, id: item.id }
+    const ownerSnap = await getDocs(query(
+      collection(db, 'connections'),
+      where('ownerUid', '==', user.uid),
+      limit(5)
+    ))
+    const supporterSnap = await getDocs(query(
+      collection(db, 'connections'),
+      where('supporterUid', '==', user.uid),
+      limit(5)
+    ))
+
+    const allDocs = [...ownerSnap.docs, ...supporterSnap.docs]
+      .map((d) => ({ id: d.id, ...d.data() }))
+      .filter((d) => d.status === 'active' || d.status === 'pending')
+
+    const activeConn = allDocs.find((d) => d.status === 'active')
+    const conn = activeConn || allDocs.find((d) => d.status === 'pending')
+
+    if (!conn) return { status: 'none' }
+
+    const isOwner = conn.ownerUid === user.uid
+    let connectedPersonName = isOwner ? (conn.supporterName || '') : (conn.ownerName || '')
+
+    if (!connectedPersonName) {
+      const otherUid = isOwner ? conn.supporterUid : conn.ownerUid
+      if (otherUid) {
+        try {
+          const otherSnap = await getDoc(doc(db, 'users', otherUid))
+          if (otherSnap.exists()) {
+            connectedPersonName = otherSnap.data()?.name || ''
+          }
+        } catch {
+          // ignore error
+        }
+      }
+    }
+
+    if (!connectedPersonName) {
+      connectedPersonName = isOwner ? 'Supporter' : 'Connection'
+    }
+
+    return {
+      ...conn,
+      status: conn.status === 'active' ? 'connected' : 'pending',
+      connectedPersonName,
+      hasSupporterJoined: Boolean(conn.supporterUid),
+    }
   } catch (err) {
-    // Permission-denied errors happen when Firestore rules block collection queries.
-    // Return 'none' so UI shows the connect flow rather than a hard error.
     if (err?.code === 'permission-denied' || err?.message?.includes('permission')) {
       return { status: 'none' }
     }
@@ -280,26 +376,58 @@ export async function getConnectionStatus() {
   }
 }
 
-export async function disconnectSupporter() { const user = requireUser(); const status = await getConnectionStatus(); if (status.id && status.ownerUid === user.uid) await updateDoc(doc(db, 'connections', status.id), { status: 'revoked', revokedAt: serverTimestamp(), updatedAt: serverTimestamp() }) }
-export async function getSupporterData() {
-  const connection = await getConnectionStatus()
-  if (connection.status !== 'connected') return { connection, shared: null, permissions: {} }
-  const snapshot = await getDoc(doc(db, 'connections', connection.id, 'shared', 'currentStatus'))
-  const shared = snapshot.exists() ? snapshot.data() : null
-  // Pick the most relevant support suggestion based on what is shared
-  let suggestionKey = 'noDataShared'
-  if (shared) {
-    if (shared.painLevel && Number(shared.painLevel) >= 3) suggestionKey = 'painReported'
-    else if (shared.periodStatus && shared.periodStatus.toLowerCase().includes('on period')) suggestionKey = 'periodActive'
-    else if (shared.energy && Number(shared.energy) <= 3) suggestionKey = 'lowEnergyReported'
-    else if (shared.cyclePhase || shared.expectedPeriod || shared.mood) suggestionKey = 'noDataShared'
-  }
-  return {
-    connection,
-    connectedUserName: connection.connectedPersonName,
-    shared,
-    permissions: connection.sharing || {},
-    suggestion: SUPPORT_SUGGESTIONS[suggestionKey] || SUPPORT_SUGGESTIONS.noDataShared,
+export async function disconnectSupporter() {
+  const user = requireUser()
+  const status = await getConnectionStatus()
+  if (status.id && (status.ownerUid === user.uid || status.supporterUid === user.uid)) {
+    await updateDoc(doc(db, 'connections', status.id), {
+      status: 'revoked',
+      revokedAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    })
   }
 }
+
+export async function getSupporterData() {
+  const connection = await getConnectionStatus()
+  if (connection.status !== 'connected') {
+    return {
+      connection,
+      connectedUserName: connection.connectedPersonName || 'Connection',
+      shared: null,
+      permissions: {},
+      suggestion: SUPPORT_SUGGESTIONS.noDataShared,
+    }
+  }
+  const snapshot = await getDoc(doc(db, 'connections', connection.id, 'shared', 'currentStatus'))
+  const shared = snapshot.exists() ? snapshot.data() : null
+
+  let suggestionKey = 'noDataShared'
+  if (shared) {
+    if (shared.painLevel != null && Number(shared.painLevel) >= 3) {
+      suggestionKey = 'painReported'
+    } else if (shared.periodStatus && String(shared.periodStatus).toLowerCase().includes('on period')) {
+      suggestionKey = 'periodActive'
+    } else if (shared.energy && (String(shared.energy).toLowerCase().includes('low') || Number(shared.energy) <= 3)) {
+      suggestionKey = 'lowEnergyReported'
+    } else {
+      suggestionKey = 'noDataShared'
+    }
+  }
+
+  const suggestion = SUPPORT_SUGGESTIONS[suggestionKey] || SUPPORT_SUGGESTIONS.noDataShared
+
+  return {
+    connection,
+    connectedUserName: connection.connectedPersonName || 'your connection',
+    shared,
+    permissions: connection.sharing || {},
+    suggestion: {
+      feeling: suggestion?.feeling || 'No additional health information has been shared.',
+      help: Array.isArray(suggestion?.help) ? suggestion.help : [],
+      avoid: Array.isArray(suggestion?.avoid) ? suggestion.avoid : [],
+    },
+  }
+}
+
 export async function getReportsData() { const cycleInfo = await getCycleData(); const logs = Object.values(await getHealthLogs()).sort((a,b) => b.date.localeCompare(a.date)); return { cycleInfo, history: cycleInfo.history, logs, painTrend: logs.slice().reverse().map((l) => ({ date: l.date, pain: l.pain })) } }
