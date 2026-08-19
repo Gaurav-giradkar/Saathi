@@ -153,7 +153,7 @@ function validateHealthEntry(entry) {
     if (!Number.isFinite(number) || number < min || number > max) throw new Error(`${label} must be between ${min} and ${max}.`)
   }
   numberInRange(entry.pain, 0, 10, 'Pain level')
-  numberInRange(entry.sleep, 0, 16, 'Sleep duration')
+  numberInRange(entry.sleep, 0, 24, 'Sleep duration')
   numberInRange(entry.waterLiters, 0, 10, 'Water intake')
   numberInRange(entry.exerciseMinutes, 0, 1440, 'Exercise duration')
   const requiredOtherText = [
