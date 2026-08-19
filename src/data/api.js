@@ -4,7 +4,7 @@ import {
 } from 'firebase/auth'
 import {
   collection, doc, getDoc, getDocs, limit, orderBy, query, serverTimestamp,
-  setDoc, updateDoc, where,
+  setDoc, updateDoc, where, writeBatch,
 } from 'firebase/firestore'
 import { auth, db, firebaseConfigured, firebaseConfigError } from '../lib/firebase.js'
 import {
@@ -176,10 +176,130 @@ export async function getSharingPermissions() { const data = await getUserData()
 export async function updateSharingPermissions(key, value) { const user = requireUser(); const permissions = await getSharingPermissions(); permissions[key] = value; await setDoc(doc(db, 'users', user.uid), { sharingPermissions: permissions, updatedAt: serverTimestamp() }, { merge: true }); await publishSharedProjection(user.uid); return permissions }
 
 const inviteCode = () => crypto.getRandomValues(new Uint32Array(1))[0].toString(36).slice(-6).toUpperCase()
-export async function generateInviteCode() { const user = requireUser(); const code = inviteCode(); const connection = doc(collection(db, 'connections')); await setDoc(connection, { ownerUid: user.uid, status: 'pending', inviteCode: code, sharing: await getSharingPermissions(), createdAt: serverTimestamp(), updatedAt: serverTimestamp() }); return code }
-export async function submitInviteCode(code) { const user = requireUser(); const result = await getDocs(query(collection(db, 'connections'), where('inviteCode', '==', code), where('status', '==', 'pending'), limit(1))); if (result.empty) throw new Error('That invitation is invalid or has expired.'); await updateDoc(result.docs[0].ref, { supporterUid: user.uid, updatedAt: serverTimestamp() }); return { status: 'pending' } }
+export async function generateInviteCode() {
+  const user = requireUser()
+
+  const code = inviteCode()
+
+  const connectionRef = doc(collection(db, 'connections'))
+  const inviteRef = doc(db, 'inviteCodes', code)
+
+  const batch = writeBatch(db)
+
+  batch.set(connectionRef, {
+    ownerUid: user.uid,
+    supporterUid: null,
+    status: 'pending',
+    inviteCode: code,
+    sharing: await getSharingPermissions(),
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  })
+
+  batch.set(inviteRef, {
+    connectionId: connectionRef.id,
+    status: 'pending',
+    createdAt: serverTimestamp(),
+  })
+
+  await batch.commit()
+
+  return code
+}
+export async function submitInviteCode(code) {
+  const user = requireUser()
+
+  const normalizedCode = String(code || '').trim().toUpperCase()
+
+  if (!normalizedCode) {
+    throw new Error('Enter an invitation code.')
+  }
+
+  const inviteRef = doc(db, 'inviteCodes', normalizedCode)
+  const inviteSnap = await getDoc(inviteRef)
+
+  if (!inviteSnap.exists()) {
+    throw new Error('That invitation is invalid or has expired.')
+  }
+
+  const invite = inviteSnap.data()
+
+  if (invite.status !== 'pending') {
+    throw new Error('That invitation is no longer active.')
+  }
+
+  const connectionRef = doc(db, 'connections', invite.connectionId)
+  const connectionSnap = await getDoc(connectionRef)
+
+  if (!connectionSnap.exists()) {
+    throw new Error('The connection could not be found.')
+  }
+
+  const connection = connectionSnap.data()
+
+  if (connection.status !== 'pending') {
+    throw new Error('That invitation is no longer active.')
+  }
+
+  if (connection.supporterUid) {
+    throw new Error('This invitation has already been used.')
+  }
+
+  await updateDoc(connectionRef, {
+    supporterUid: user.uid,
+    updatedAt: serverTimestamp(),
+  })
+
+  return {
+    status: 'pending',
+    connectionId: connectionRef.id,
+  }
+}
 export async function approveConnection() { const user = requireUser(); const result = await getDocs(query(collection(db, 'connections'), where('ownerUid', '==', user.uid), where('status', '==', 'pending'), limit(1))); if (result.empty) throw new Error('No pending connection request was found.'); await updateDoc(result.docs[0].ref, { status: 'active', approvedAt: serverTimestamp(), updatedAt: serverTimestamp() }); await publishSharedProjection(user.uid); return result.docs[0].data() }
-export async function getConnectionStatus() { const user = requireUser(); const result = await getDocs(query(collection(db, 'connections'), where('ownerUid', '==', user.uid), limit(1))); const supporter = await getDocs(query(collection(db, 'connections'), where('supporterUid', '==', user.uid), limit(1))); const item = result.docs[0] || supporter.docs[0]; if (!item) return { status: 'none' }; const data = item.data(); const otherId = data.ownerUid === user.uid ? data.supporterUid : data.ownerUid; let connectedPersonName = ''; if (otherId) { const p = await getDoc(doc(db, 'users', otherId)); connectedPersonName = p.data()?.name || 'your connection' } return { ...data, status: data.status === 'active' ? 'connected' : 'pending', connectedPersonName, id: item.id } }
+export async function getConnectionStatus() {
+  const user = requireUser()
+  try {
+    const result = await getDocs(query(collection(db, 'connections'), where('ownerUid', '==', user.uid), limit(1)))
+    const supporter = await getDocs(query(collection(db, 'connections'), where('supporterUid', '==', user.uid), limit(1)))
+    const item = result.docs[0] || supporter.docs[0]
+    if (!item) return { status: 'none' }
+    const data = item.data()
+    // Revoked or unknown status → treat as not connected
+    if (!data.status || data.status === 'revoked') return { status: 'none' }
+    const otherId = data.ownerUid === user.uid ? data.supporterUid : data.ownerUid
+    let connectedPersonName = ''
+    if (otherId) { const p = await getDoc(doc(db, 'users', otherId)); connectedPersonName = p.data()?.name || 'your connection' }
+    return { ...data, status: data.status === 'active' ? 'connected' : 'pending', connectedPersonName, id: item.id }
+  } catch (err) {
+    // Permission-denied errors happen when Firestore rules block collection queries.
+    // Return 'none' so UI shows the connect flow rather than a hard error.
+    if (err?.code === 'permission-denied' || err?.message?.includes('permission')) {
+      return { status: 'none' }
+    }
+    throw err
+  }
+}
+
 export async function disconnectSupporter() { const user = requireUser(); const status = await getConnectionStatus(); if (status.id && status.ownerUid === user.uid) await updateDoc(doc(db, 'connections', status.id), { status: 'revoked', revokedAt: serverTimestamp(), updatedAt: serverTimestamp() }) }
-export async function getSupporterData() { const connection = await getConnectionStatus(); if (connection.status !== 'connected') return { connection, shared: null, permissions: {} }; const snapshot = await getDoc(doc(db, 'connections', connection.id, 'shared', 'currentStatus')); return { connection, connectedUserName: connection.connectedPersonName, shared: snapshot.exists() ? snapshot.data() : null, permissions: connection.sharing || {}, suggestion: SUPPORT_SUGGESTIONS.follicular } }
+export async function getSupporterData() {
+  const connection = await getConnectionStatus()
+  if (connection.status !== 'connected') return { connection, shared: null, permissions: {} }
+  const snapshot = await getDoc(doc(db, 'connections', connection.id, 'shared', 'currentStatus'))
+  const shared = snapshot.exists() ? snapshot.data() : null
+  // Pick the most relevant support suggestion based on what is shared
+  let suggestionKey = 'noDataShared'
+  if (shared) {
+    if (shared.painLevel && Number(shared.painLevel) >= 3) suggestionKey = 'painReported'
+    else if (shared.periodStatus && shared.periodStatus.toLowerCase().includes('on period')) suggestionKey = 'periodActive'
+    else if (shared.energy && Number(shared.energy) <= 3) suggestionKey = 'lowEnergyReported'
+    else if (shared.cyclePhase || shared.expectedPeriod || shared.mood) suggestionKey = 'noDataShared'
+  }
+  return {
+    connection,
+    connectedUserName: connection.connectedPersonName,
+    shared,
+    permissions: connection.sharing || {},
+    suggestion: SUPPORT_SUGGESTIONS[suggestionKey] || SUPPORT_SUGGESTIONS.noDataShared,
+  }
+}
 export async function getReportsData() { const cycleInfo = await getCycleData(); const logs = Object.values(await getHealthLogs()).sort((a,b) => b.date.localeCompare(a.date)); return { cycleInfo, history: cycleInfo.history, logs, painTrend: logs.slice().reverse().map((l) => ({ date: l.date, pain: l.pain })) } }

@@ -19,17 +19,36 @@ export default function SupporterSetup() {
   const [notifications, setNotifications] = useState(true)
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
-  const { showToast } = useApp()
+  const { showToast, refreshAuth } = useApp()
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    setLoading(true)
-    await saveSupporterSetup({ name, relationship, helpStyle, notifications })
-    showToast('Setup complete')
-    setLoading(false)
-    navigate('/supporter/connection')
-  }
 
+    try {
+      setLoading(true)
+
+      await saveSupporterSetup({
+        name,
+        relationship,
+        helpStyle,
+        notifications,
+      })
+
+      // Refresh AppContext so role/onboarding state is updated
+      await refreshAuth()
+
+      showToast('Setup complete')
+
+      navigate('/supporter/dashboard', { replace: true })
+    } catch (error) {
+      showToast(
+        error?.message || 'Unable to complete setup.',
+        'error'
+      )
+    } finally {
+      setLoading(false)
+    }
+  }
   return (
     <div className="min-h-screen bg-bg px-6 py-12">
       <form onSubmit={handleSubmit} className="max-w-xl mx-auto flex flex-col gap-6 animate-fadeIn">

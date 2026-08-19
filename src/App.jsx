@@ -73,11 +73,13 @@ export default function App() {
             </ProtectedRoute>
           }
         >
+          <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<SupporterDashboard />} />
           <Route path="guidance" element={<SupporterGuidance />} />
           <Route path="connection" element={<SupporterConnection />} />
           <Route path="education" element={<EducationCenter />} />
         </Route>
+
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

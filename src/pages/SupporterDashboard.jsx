@@ -10,11 +10,20 @@ import { MOOD_OPTIONS } from '../data/mockData.js'
 
 export default function SupporterDashboard() {
   const [data, setData] = useState(null)
+  const [fetchError, setFetchError] = useState(null)
 
   useEffect(() => {
-    getSupporterData().then(setData)
+    getSupporterData()
+      .then(setData)
+      .catch((err) => setFetchError(err?.message || 'Failed to load dashboard data.'))
   }, [])
 
+  if (fetchError) return (
+    <div className="text-center py-20 flex flex-col items-center gap-3">
+      <p className="text-rose-500 font-medium">Could not load dashboard</p>
+      <p className="text-ink-400 text-sm max-w-sm">{fetchError}</p>
+    </div>
+  )
   if (!data) return <div className="animate-pulse text-ink-400 text-sm py-20 text-center">Loading…</div>
 
   if (data.connection.status !== 'connected') {
@@ -68,7 +77,7 @@ export default function SupporterDashboard() {
         <StatCard icon={Droplets} label="Period status" value={data.shared.periodStatus || 'Private'} accent="rose" />
         <StatCard icon={CalendarClock} label="Expected period" value={data.shared.expectedPeriod ? new Date(data.shared.expectedPeriod).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : 'Private'} accent="plum" />
         <StatCard icon={ThermometerSun} label="Shared pain level" value={data.shared.painLevel ? `${data.shared.painLevel}/10` : 'Private'} accent="amber" />
-        <StatCard icon={Smile} label="How she may feel" value={moodMeta ? `${moodMeta.emoji} ${moodMeta.label}` : data.suggestion.feeling.split(',')[0]} accent="teal" />
+        <StatCard icon={Smile} label="How she may feel" value={moodMeta ? `${moodMeta.emoji} ${moodMeta.label}` : (data.suggestion?.feeling?.split(',')[0] || 'Unknown')} accent="teal" />
       </div>
 
       <Card className="bg-teal-50/60 border-teal-100">

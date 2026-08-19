@@ -8,7 +8,7 @@ import BottomNav from '../components/common/BottomNav.jsx'
 export const SUPPORTER_NAV_ITEMS = [
   { to: '/supporter/dashboard', label: 'Dashboard', shortLabel: 'Home', icon: Home, end: true },
   { to: '/supporter/guidance', label: 'How to Help', shortLabel: 'Guidance', icon: HeartHandshake },
-  { to: '/supporter/education', label: 'Learn', shortLabel: 'Learn', icon: BookOpen },
+  { to: '/supporter/education', label: 'education', shortLabel: 'education', icon: BookOpen },
   { to: '/supporter/connection', label: 'Connection', shortLabel: 'Connect', icon: Users },
 ]
 

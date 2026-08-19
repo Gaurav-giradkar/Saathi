@@ -12,7 +12,7 @@ import {
   getUserData, getCycleData, getInsights, getRecommendations, getHealthData,
 } from '../data/api.js'
 import { MOOD_OPTIONS } from '../data/mockData.js'
-import saathiGirl from '../images/saathi-girl.png.png'
+import saathiGirl from '../images/saathi-girl.png'
 
 function formatDate(iso) {
   return new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })

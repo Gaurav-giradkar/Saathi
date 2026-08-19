@@ -1,34 +1,124 @@
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
-    function signedIn() { return request.auth != null; }
-    function mine(uid) { return signedIn() && request.auth.uid == uid; }
-    function activeConnection() {
-      return signedIn() && resource.data.status == 'active' &&
-        (resource.data.ownerUid == request.auth.uid || resource.data.supporterUid == request.auth.uid);
+
+    function signedIn() {
+      return request.auth != null;
     }
 
+    function mine(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    function isOwner() {
+      return signedIn() &&
+        resource.data.ownerUid == request.auth.uid;
+    }
+
+    function isSupporter() {
+      return signedIn() &&
+        resource.data.supporterUid == request.auth.uid;
+    }
+
+    // =========================
+    // USERS
+    // =========================
     match /users/{uid} {
       allow read, create, update: if mine(uid);
       allow delete: if false;
-      match /cycles/{cycleId} { allow read, write: if mine(uid); }
-      match /healthEntries/{entryId} { allow read, write: if mine(uid); }
+
+      match /cycles/{cycleId} {
+        allow read, write: if mine(uid);
+      }
+
+      match /healthEntries/{entryId} {
+        allow read, write: if mine(uid);
+      }
     }
 
+    // =========================
+    // INVITATION CODES
+    // ADD THIS HERE
+    // =========================
+    match /inviteCodes/{code} {
+
+  // A signed-in user can resolve a pending invitation.
+  allow get: if signedIn() &&
+    resource.data.status == 'pending' &&
+    get(
+      /databases/$(database)/documents/connections/$(resource.data.connectionId)
+    ).data.status == 'pending';
+
+  // Owner creates the invite code in the same batch
+  // as the connection document.
+  allow create: if signedIn() &&
+    request.resource.data.status == 'pending' &&
+    getAfter(
+      /databases/$(database)/documents/connections/$(request.resource.data.connectionId)
+    ).data.ownerUid == request.auth.uid;
+
+  allow update, delete: if false;
+}
+
+    // =========================
+    // CONNECTIONS
+    // =========================
     match /connections/{connectionId} {
-      allow create: if signedIn() && request.resource.data.ownerUid == request.auth.uid;
-      allow read: if activeConnection() || (signedIn() && resource.data.ownerUid == request.auth.uid);
+
+      function isActiveMember() {
+        return signedIn() &&
+          resource.data.status == 'active' &&
+          (
+            resource.data.ownerUid == request.auth.uid ||
+            resource.data.supporterUid == request.auth.uid
+          );
+      }
+
+      allow create: if signedIn() &&
+        request.resource.data.ownerUid == request.auth.uid;
+
+      allow get: if isOwner() || isSupporter();
+
+      allow list: if signedIn() &&
+        (
+          resource.data.ownerUid == request.auth.uid ||
+          resource.data.supporterUid == request.auth.uid
+        );
+
       allow update: if signedIn() && (
         resource.data.ownerUid == request.auth.uid ||
-        (resource.data.status == 'pending' && resource.data.supporterUid == null &&
+        (
+          resource.data.status == 'pending' &&
+          resource.data.supporterUid == null &&
           request.resource.data.ownerUid == resource.data.ownerUid &&
           request.resource.data.inviteCode == resource.data.inviteCode &&
-          request.resource.data.status == 'pending' && request.resource.data.supporterUid == request.auth.uid)
+          request.resource.data.status == 'pending' &&
+          request.resource.data.supporterUid == request.auth.uid
+        )
       );
+
       allow delete: if false;
+
       match /shared/{documentId} {
-        allow read: if activeConnection();
-        allow write: if signedIn() && get(/databases/$(database)/documents/connections/$(connectionId)).data.ownerUid == request.auth.uid;
+
+        function parentConnection() {
+          return get(
+            /databases/$(database)/documents/connections/$(connectionId)
+          );
+        }
+
+        allow get, list: if signedIn() &&
+          parentConnection().data.status == 'active' &&
+          (
+            parentConnection().data.ownerUid == request.auth.uid ||
+            parentConnection().data.supporterUid == request.auth.uid
+          );
+
+        allow create, update: if signedIn() &&
+          parentConnection().data.ownerUid == request.auth.uid;
+
+        allow delete: if false;
       }
     }
   }
