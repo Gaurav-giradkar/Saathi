@@ -55,7 +55,6 @@ export default function UserDashboard() {
           </h1>
           <p className="text-ink-500 text-sm mt-1">Here's how your cycle & wellbeing look today.</p>
         </div>
-        <PhaseBadge phaseKey={cycle.phaseKey} />
       </div>
 
       <div className="grid lg:grid-cols-[0.75fr_1.5fr] gap-6">
@@ -192,6 +191,21 @@ export default function UserDashboard() {
         </p>
       </div>
 
+      <div className="rounded-2xl bg-green-50 p-4 text-center hover:shadow-sm transition">
+        <div className="text-2xl mb-2">
+          ᯓ🏃🏻‍♀️‍➡️
+        </div>
+
+        <p className="text-sm font-semibold text-ink-800">
+          Exercise
+        </p>
+
+        <p className="text-xs text-cyan-600 mt-1 font-medium">
+          {todayLog?.Exercise
+            ? `${todayLog.Exercise} minutes`
+            : 'Not logged'}
+        </p>
+      </div>
     </div>
 
 
@@ -272,108 +286,29 @@ export default function UserDashboard() {
             </Link>
           </div>
         <div className="grid grid-cols-3 gap-3">
-  <RecommendationCard
-    icon="🥗"
-    title="Nutrition"
-    tip="Healthy choices for your cycle"
-    color="rose"
-  />
+            <RecommendationCard
+              icon="🥗"
+              title="Nutrition"
+              tip="Healthy choices for your cycle"
+              color="rose"
+            />
 
-  <RecommendationCard
-    icon="🏃"
-    title="Movement"
-    tip="Gentle activities for today"
-    color="plum"
-  />
+            <RecommendationCard
+              icon="🏃"
+              title="Movement"
+              tip="Gentle activities for today"
+              color="plum"
+            />
 
-  <RecommendationCard
-    icon="🧘"
-    title="Self Care"
-    tip="Take a little time for yourself"
-    color="teal"
-  />
-</div>
+            <RecommendationCard
+              icon="🧘"
+              title="Self Care"
+              tip="Take a little time for yourself"
+              color="teal"
+            />
+          </div>
         </Card>
       </div>
-
-      <Card className="relative overflow-hidden">
-  <div className="flex items-center justify-between mb-5">
-    <div>
-      <h2 className="font-display font-semibold text-ink-900 text-lg">
-        Recent Symptoms
-      </h2>
-      <p className="text-sm text-ink-500 mt-1">
-        Track how you're feeling today ☺️
-      </p>
-    </div>
-
-    <Link to="/daily-health">
-      <Button size="sm" variant="subtle">
-        + Add Symptoms
-      </Button>
-    </Link>
-  </div>
-
-  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-
-    <div className="rounded-2xl bg-rose-50 p-4">
-      <div className="text-2xl mb-2">🤕</div>
-      <p className="font-semibold text-ink-900">Cramps</p>
-      <span className="text-xs text-rose-600 font-medium">
-        Moderate
-      </span>
-    </div>
-
-    <div className="rounded-2xl bg-pink-50 p-4">
-      <div className="text-2xl mb-2">🌸</div>
-      <p className="font-semibold text-ink-900">Acne</p>
-      <span className="text-xs text-pink-600 font-medium">
-        Mild
-      </span>
-    </div>
-
-    <div className="rounded-2xl bg-purple-50 p-4">
-      <div className="text-2xl mb-2">😣</div>
-      <p className="font-semibold text-ink-900">Backache</p>
-      <span className="text-xs text-purple-600 font-medium">
-        Mild
-      </span>
-    </div>
-
-    <div className="rounded-2xl bg-amber-50 p-4">
-      <div className="text-2xl mb-2">🍫</div>
-      <p className="font-semibold text-ink-900">Cravings</p>
-      <span className="text-xs text-amber-600 font-medium">
-        Moderate
-      </span>
-    </div>
-
-    <div className="rounded-2xl bg-orange-50 p-4">
-      <div className="text-2xl mb-2">🫧</div>
-      <p className="font-semibold text-ink-900">Bloating</p>
-      <span className="text-xs text-orange-600 font-medium">
-        Mild
-      </span>
-    </div>
-
-    <div className="rounded-2xl bg-teal-50 p-4">
-      <div className="text-2xl mb-2">😴</div>
-      <p className="font-semibold text-ink-900">Fatigue</p>
-      <span className="text-xs text-teal-600 font-medium">
-        Moderate
-      </span>
-    </div>
-
-    <div className="rounded-2xl bg-indigo-50 p-4">
-      <div className="text-2xl mb-2">🤯</div>
-      <p className="font-semibold text-ink-900">Headache</p>
-      <span className="text-xs text-indigo-600 font-medium">
-        Mild
-      </span>
-    </div>
-
-  </div>
-</Card>
     </div>
   )
 }

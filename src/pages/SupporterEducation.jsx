@@ -3,80 +3,159 @@ import * as Icons from 'lucide-react'
 import Card from '../components/common/Card.jsx'
 import Modal from '../components/common/Modal.jsx'
 
-const SUPPORTER_EDUCATION_TOPICS = [
+export const SUPPORTER_EDUCATION_TOPICS = [
   {
     id: 'four-phases-supporter',
     title: 'The Four Cycle Phases',
     icon: 'RefreshCw',
-    summary: 'Understand the biological progression of the menstrual, follicular, ovulation, and luteal phases.',
+    summary:
+      'Understand the biological progression of the menstrual, follicular, ovulation, and luteal phases.',
+
     content: [
-      'Menstrual Phase (Days 1–5): The uterine lining sheds when pregnancy has not occurred, causing menstrual bleeding. Cramping and lower energy are common during this time.',
-      'Follicular Phase (Days 1–13): Estrogen levels gradually rise as follicles develop in the ovaries. Energy and focus often increase during this phase.',
-      'Ovulation Phase (Around Day 14 in a 28-day cycle): An egg is released from an ovary. The exact day varies between individuals and across different cycles.',
-      'Luteal Phase (Days 15–28): Progesterone increases to prepare the body for possible pregnancy. If conception does not occur, hormone levels drop, leading to the next period.',
-      'Understanding these four phases helps supporters anticipate fluctuations in energy and physical comfort without relying on guesswork.',
+      'Menstrual Phase: The uterine lining is shed when pregnancy has not occurred, causing menstrual bleeding. Some people experience cramps, fatigue, or other symptoms during this phase, while others may notice little discomfort.',
+
+      'Follicular Phase: This phase begins on the first day of menstruation and continues toward ovulation. Follicles develop in the ovaries and estrogen generally rises. Experiences of energy, mood, and focus vary between individuals.',
+
+      'Ovulation: An egg is released from an ovary. The timing varies between individuals and across cycles, so an estimated ovulation day should be treated as an approximation rather than an exact date.',
+
+      'Luteal Phase: After ovulation, the body prepares for a possible pregnancy. Some people notice changes in mood, energy, appetite, or physical symptoms during this phase, while others notice little change.',
+
+      'Understanding the four phases provides useful context, but a cycle phase should never be used to assume how someone will feel or behave.',
     ],
   },
+
   {
     id: 'supportive-ally',
     title: 'How to Be an Effective Supporter',
     icon: 'HeartHandshake',
-    summary: 'Practical principles for supporting a partner, friend, or family member during their cycle.',
+    summary:
+      'Practical principles for supporting a partner, friend, or family member during their cycle.',
+
     content: [
-      'Be Proactive with Practical Help: Take care of everyday responsibilities like preparing meals, washing dishes, or running errands without waiting for an explicit request.',
-      'Listen Without Trying to Immediately Fix: Often, empathetic listening and validation ("That sounds really uncomfortable, I\'m here for you") is far more comforting than unasked-for advice.',
-      'Learn the Basics Independently: Taking the initiative to understand menstrual health shows genuine care and takes the burden off the other person to educate you.',
-      'Respect Preferences and Boundaries: Everyone experiences their cycle differently. Some prefer company and conversation, while others value quiet rest and solitude.',
+      'Offer Practical Help: Help with meals, chores, errands, or other everyday responsibilities when it would be useful.',
+
+      'Listen Before Trying to Fix: Sometimes empathetic listening and validation are more helpful than immediately offering advice.',
+
+      'Learn the Basics Independently: Understanding menstrual health yourself means the other person does not always have to explain everything to you.',
+
+      'Respect Preferences and Boundaries: Some people prefer company and conversation, while others prefer quiet or time alone.',
+
+      'Ask Rather Than Assume: The best support is based on what the person actually wants, not on assumptions about their cycle phase.',
     ],
   },
+
   {
     id: 'understanding-symptoms',
     title: 'Understanding Common Symptoms',
     icon: 'Stethoscope',
-    summary: 'Recognize the physical symptoms of menstruation and how to provide comfort.',
+    summary:
+      'Recognize common menstrual symptoms and understand how to provide appropriate support.',
+
     content: [
-      'Cramps (Dysmenorrhea): Caused by uterine contractions triggered by prostaglandins. Heat pads, warm baths, and rest can often help soothe discomfort.',
-      'Fatigue & Energy Dips: Hormonal fluctuations and iron loss can cause noticeable fatigue. Encourage adequate rest and stay patient.',
-      'Headaches & Migraines: Sudden changes in estrogen levels can trigger hormonal headaches. Dim lighting, hydration, and a quiet environment are helpful.',
-      'Bloating & Digestive Shifts: Hormones can affect fluid retention and digestion. Offering easy-to-digest foods and steady water intake supports comfort.',
-      'When to Seek Medical Attention: If symptoms or pain are debilitating and prevent normal activities, gently encourage a consultation with a qualified healthcare professional.',
+      'Cramps: Menstrual cramps can occur when the uterus contracts. Some people find heat, rest, or gentle movement helpful for mild discomfort.',
+
+      'Fatigue and Lower Energy: Some people experience tiredness or lower energy around parts of their cycle. Sleep, stress, overall health, and many other factors can also affect energy.',
+
+      'Headaches and Migraines: Some people experience headaches or migraines around their period or other parts of the cycle. A quiet environment, hydration, and rest may be helpful for some people.',
+
+      'Bloating and Digestive Changes: Some people notice bloating or changes in digestion around their cycle.',
+
+      'When to Seek Medical Attention: Severe, worsening, persistent, or disruptive symptoms should not simply be dismissed as "normal." Encourage the person to speak with a qualified healthcare professional when appropriate.',
     ],
   },
+
   {
     id: 'myths-facts-allies',
     title: 'Myths vs Facts for Supporters',
     icon: 'CheckCircle2',
-    summary: 'Separate widespread misconceptions from evidence-based biological facts.',
+    summary:
+      'Separate widespread misconceptions from evidence-based menstrual health information.',
+
     content: [
-      'Myth: Every cycle is exactly 28 days long.\nFact: Normal cycles can range between 21 to 35 days and can naturally fluctuate from month to month.',
-      'Myth: Emotional changes mean someone is "just being dramatic".\nFact: Hormonal shifts directly impact neurotransmitters like serotonin. Emotions and physical discomfort are real and valid.',
-      'Myth: Period pain is just something people have to endure silently.\nFact: While mild cramping is common, severe pain is not something to dismiss. It can indicate underlying conditions that deserve medical care.',
-      'Myth: Talking about menstruation is awkward or inappropriate.\nFact: Menstruation is a completely normal, healthy physiological process. Normalizing open conversation removes unnecessary stigma.',
+      'Myth: Every cycle is exactly 28 days long.\nFact: Cycle length varies between people and can also vary from one cycle to another.',
+
+      'Myth: Someone’s period automatically explains their mood or behavior.\nFact: People experience menstrual cycles differently, and emotions should not automatically be attributed to menstruation.',
+
+      'Myth: Period pain is something everyone should simply tolerate.\nFact: Mild discomfort can be common, but severe or disruptive pain should not be dismissed and may require professional evaluation.',
+
+      'Myth: Talking about menstruation is awkward or inappropriate.\nFact: Menstruation is a normal physiological process, and respectful communication can make it easier for someone to ask for support.',
     ],
   },
+
   {
     id: 'respectful-communication',
     title: 'Respectful Communication & Privacy',
     icon: 'MessageSquareHeart',
-    summary: 'Best practices for talking about menstrual health respectfully and maintaining trust.',
+    summary:
+      'Best practices for talking about menstrual health respectfully and maintaining trust.',
+
     content: [
-      'Never Attribute Disagreements to Her Period: Saying "Are you on your period?" during a conflict is dismissive and invalidating. Address the subject of the disagreement directly.',
-      'Respect Sharing Boundaries: The Saathi platform gives full privacy control to the user. Always respect whatever permissions they choose to enable or keep private.',
-      'Ask Clarifying Questions: Phrases like "Would you prefer some quiet time, or would you like company?" demonstrate respect for their immediate comfort.',
-      'Maintain Confidentiality: Health information shared with you is private. Never discuss someone else\'s cycle details with others without their explicit consent.',
+      'Never Attribute Disagreements to Their Period: Saying "Are you on your period?" during a disagreement can be dismissive. Address the actual issue instead.',
+
+      'Respect Sharing Boundaries: Saathi allows the user to choose what information is shared. Those choices should always be respected.',
+
+      'Ask Clarifying Questions: "Would you prefer some quiet time, or would you like company?" gives the person control over the kind of support they receive.',
+
+      'Maintain Confidentiality: Health information shared with you is private. Do not discuss someone else’s cycle or health information with others without their permission.',
     ],
   },
+
   {
     id: 'product-essentials',
     title: 'Menstrual Products & Supplies',
     icon: 'ShoppingBag',
-    summary: 'A quick guide to menstrual product types so you can pick up the right supplies with confidence.',
+    summary:
+      'Understand common menstrual product types so you can help when someone asks.',
+
     content: [
-      'Sanitary Pads: External absorbent pads attached to underwear. Available in various lengths (regular, long, overnight) and with/without wings.',
-      'Tampons: Internal absorbent products inserted into the vagina. Sized by absorbency (Light, Regular, Super). Always check preferred brand and absorbency.',
-      'Menstrual Cups: Reusable medical-grade silicone cups that collect fluid. Sized by capacity and firmness.',
-      'Period Underwear: Washable underwear with built-in absorbent layers, used alone or as backup protection.',
-      'Helpful Tip When Buying Supplies: If you are asked to buy products, taking a photo of the packaging or asking for the exact brand and absorbency level ensures you get the right match.',
+      'Sanitary Pads: External absorbent products available in different sizes, lengths, and absorbencies.',
+
+      'Tampons: Internal menstrual products available in different absorbencies. Always follow the product instructions and use the type and absorbency preferred by the person using them.',
+
+      'Menstrual Cups: Reusable internal products that collect menstrual fluid. Size, capacity, and care requirements vary by product.',
+
+      'Period Underwear: Reusable underwear designed with absorbent layers and available in different absorbencies.',
+
+      'Helpful Tip When Buying Supplies: Ask for the exact product, brand, size, or absorbency rather than guessing. A photo of the packaging can also help you buy the correct item.',
+    ],
+  },
+
+  {
+    id: 'when-space-needed',
+    title: 'When Someone Needs Space',
+    icon: 'UserX',
+    summary:
+      'Understand why giving someone space can sometimes be the most supportive choice.',
+
+    content: [
+      'Support does not always mean staying close. Sometimes someone may simply want rest, privacy, or time alone.',
+
+      'Do not assume that quietness or less communication means they are angry or upset with you.',
+
+      'A simple message such as "I’m here if you need anything" can communicate support without creating pressure.',
+
+      'If someone asks for space, respect the request and avoid making them feel guilty for needing it.',
+
+      'Good support is flexible: sometimes it means helping, sometimes listening, and sometimes simply being available.',
+    ],
+  },
+    {
+    id: 'different-needs',
+    title: 'Supporting Different Needs',
+    icon: 'Users',
+    summary:
+      'Learn how support can look different from one person to another.',
+
+    content: [
+      'There is no single way to support someone during their cycle. One person may want practical help, while another may prefer conversation, reassurance, or some quiet time.',
+
+      'Ask what they need instead of assuming. A simple question such as "Would you like help, company, or some space?" gives them control over the situation.',
+
+      'Support needs can also change from day to day. What was helpful during one cycle or one day may not be what the person wants another time.',
+
+      'The goal is not to manage someone’s experience for them. Good support means listening, respecting their choices, and being available when they want help.',
+
+      'Saathi helps make this easier by allowing the user to choose what information they share with their supporter.',
     ],
   },
 ]
@@ -92,7 +171,7 @@ export default function SupporterEducation() {
           Supporter education center
         </h1>
         <p className="text-ink-500 text-sm mt-1">
-          Evidence-based explainers, cycle fundamentals, and supportive communication guides.
+          Understand menstrual health, cycle fundamentals, and how to provide respectful support.
         </p>
       </div>
 

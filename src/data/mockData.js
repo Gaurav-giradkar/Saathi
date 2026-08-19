@@ -231,25 +231,26 @@ export const EDUCATION_TOPICS = [
     id: 'about-periods',
     title: 'About Periods',
     icon: 'Droplet',
-    summary: 'Understand what a period is, why it happens, and how it fits into the menstrual cycle.',
+    summary:
+      'Understand what a period is, why it happens, and how it fits into the menstrual cycle.',
 
     content: [
       'A period, or menstruation, is the release of blood and tissue from the lining of the uterus when pregnancy has not occurred.',
 
       'A period is one part of the menstrual cycle. The cycle is counted from the first day of menstrual bleeding to the first day of the next period.',
 
-      'A period commonly lasts about 2–7 days. The average menstrual cycle is around 28 days, although cycle length can vary between people and from one cycle to another.',
+      'A period commonly lasts about 2–7 days. Cycle length can vary between people and from one cycle to another.',
 
       'Tracking the first day of each period can help you understand your own cycle pattern and notice changes over time.',
     ],
   },
 
-
   {
     id: 'four-phases',
-    title: 'The Four Phases',
+    title: 'The Four Cycle Phases',
     icon: 'RefreshCw',
-    summary: 'Learn about the menstrual, follicular, ovulation, and luteal phases of the cycle.',
+    summary:
+      'Learn about the menstrual, follicular, ovulation, and luteal phases of the cycle.',
 
     content: [
       'Menstrual phase: The uterine lining is shed, producing menstrual bleeding. This is the phase commonly called the period.',
@@ -262,84 +263,120 @@ export const EDUCATION_TOPICS = [
     ],
   },
 
+  {
+    id: 'understanding-hormones',
+    title: 'Understanding Hormones',
+    icon: 'Activity',
+    summary:
+      'Learn how hormonal changes across the cycle are associated with physical and emotional experiences.',
+
+    content: [
+      'Estrogen and progesterone are two hormones that change throughout the menstrual cycle and help regulate reproductive processes.',
+
+      'Hormone levels rise and fall at different points in the cycle. These changes are part of the normal biology of menstruation.',
+
+      'Some people notice changes in energy, mood, appetite, sleep, or other symptoms alongside these hormonal changes, while others notice little difference.',
+
+      'Saathi focuses on your own tracking history rather than assuming that a particular hormone or phase will make everyone feel the same way.',
+    ],
+  },
 
   {
     id: 'symptoms-guide',
     title: 'Symptoms Guide',
     icon: 'Stethoscope',
-    summary: 'Understand common menstrual symptoms and practical ways to manage mild discomfort.',
+    summary:
+      'Understand common menstrual symptoms and ways to track how they affect you.',
 
     content: [
       'Common menstrual symptoms can include cramps, bloating, headaches, fatigue, breast tenderness, nausea, acne, and changes in mood.',
 
-      'For mild period discomfort, heat, gentle movement, adequate rest, and staying hydrated may help some people feel more comfortable.',
+      'Symptoms can vary in type, severity, duration, and timing. Tracking them over time can help you identify your own recurring patterns.',
 
-      'Over-the-counter pain relievers such as paracetamol or ibuprofen can help some people with period pain. They are not suitable for everyone, so product instructions and individual medical advice should be followed.',
+      'For mild discomfort, some people find heat, gentle movement, adequate rest, and hydration helpful.',
 
-      'If period pain is severe, worsening, or regularly interferes with school, work, exercise, sleep, or daily activities, it should be discussed with a healthcare professional.',
+      'Severe, worsening, or persistent symptoms that regularly interfere with daily activities should be discussed with a qualified healthcare professional.',
     ],
   },
-
-
-  {
-    id: 'myths-facts',
-    title: 'Myths vs Facts',
-    icon: 'CheckCircle2',
-    summary: 'Separate common menstrual myths from evidence-based information.',
-
-    content: [
-      'Myth: You should completely avoid exercise during your period.',
-      'Fact: Gentle or moderate physical activity can be helpful for some people and may reduce period discomfort.',
-
-      'Myth: Every period must arrive on exactly the same day each month. ',
-      'Fact: Cycle length can naturally vary between people and between cycles.',
-
-      'Myth: Menstrual blood is dirty or impure. ',
-      'Fact: Menstrual fluid is a normal mixture of blood, tissue from the uterine lining, and other fluids.',
-
-      'Myth: There is one menstrual product that is best for everyone.',
-      'Fact: Pads, tampons, menstrual cups, and period underwear have different characteristics, and the best choice depends on individual needs, comfort, access, and preferences.',
-    ],
-  },
-
-
-  {
-    id: 'hygiene',
-    title: 'Menstrual Hygiene',
-    icon: 'ShieldCheck',
-    summary: 'Simple practices for using menstrual products safely and maintaining good hygiene.',
-
-    content: [
-      'Wash your hands before and after changing or handling a menstrual product.',
-
-      'Change menstrual products regularly and follow the instructions provided with the specific product. Wearing a product for too long can increase the risk of irritation and bacterial growth.',
-
-      'For tampons, use the lowest absorbency that adequately manages your flow and never leave a tampon in for more than 8 hours.',
-
-      'Menstrual cups should be emptied, cleaned, and cared for according to the manufacturer’s instructions. Many cups can be worn for several hours, but the exact maximum wear time depends on the product.',
-
-      'Keep the external genital area clean. Avoid harsh or strongly fragranced products that may cause irritation.',
-    ],
-  },
-
 
   {
     id: 'mental-wellness',
     title: 'Mental Wellness',
     icon: 'HeartHandshake',
-    summary: 'Understand how cycle-related symptoms and everyday wellbeing can interact.',
+    summary:
+      'Understand how mood, stress, sleep, energy, and everyday wellbeing can interact with your cycle.',
 
     content: [
-      'Some people notice changes in mood, concentration, energy, or stress levels during different parts of their menstrual cycle.',
+      'Some people notice changes in mood, concentration, energy, or stress during different parts of their menstrual cycle.',
 
-      'These experiences vary considerably between individuals. Saathi should help you identify your own patterns rather than assuming how you should feel during a particular phase.',
+      'These experiences vary considerably between individuals. There is no single emotional pattern that applies to everyone.',
 
-      'Tracking mood alongside cycle information can help you recognize recurring personal patterns and discuss them more clearly with a healthcare professional when needed.',
+      'Tracking mood, energy, sleep, and cycle information together can help you recognize recurring personal patterns.',
 
       'If low mood, anxiety, irritability, or other emotional symptoms are severe, persistent, or interfere with daily life, consider speaking with a qualified healthcare professional.',
     ],
   },
-];
+
+  {
+    id: 'myths-facts',
+    title: 'Myths vs Facts',
+    icon: 'CheckCircle2',
+    summary:
+      'Separate common menstrual myths from evidence-based information.',
+
+    content: [
+      'Myth: You should completely avoid exercise during your period.',
+      'Fact: Gentle or moderate physical activity can be comfortable and helpful for some people.',
+
+      'Myth: Every period must arrive on exactly the same day every month.',
+      'Fact: Cycle length can naturally vary between people and between cycles.',
+
+      'Myth: Menstrual blood is dirty or impure.',
+      'Fact: Menstrual fluid is a normal mixture of blood, tissue from the uterine lining, and other fluids.',
+
+      'Myth: There is one menstrual product that is best for everyone.',
+      'Fact: Product choice depends on individual comfort, needs, access, routine, and preferences.',
+    ],
+  },
+
+  {
+    id: 'menstrual-hygiene',
+    title: 'Menstrual Hygiene',
+    icon: 'ShieldCheck',
+    summary:
+      'Learn simple practices for using menstrual products safely and comfortably.',
+
+    content: [
+      'Wash your hands before and after changing or handling a menstrual product.',
+
+      'Change menstrual products according to the product instructions and your flow. Leaving products in place for too long can increase the risk of irritation and infection.',
+
+      'For tampons, follow the product instructions, use the lowest absorbency that adequately manages your flow, and do not leave a tampon in for more than 8 hours.',
+
+      'Menstrual cups should be emptied, cleaned, and cared for according to the manufacturer’s instructions.',
+
+      'Keep the external genital area clean and avoid harsh or strongly fragranced products that may cause irritation.',
+    ],
+  },
+
+  {
+    id: 'understanding-patterns',
+    title: 'Understanding Your Patterns',
+    icon: 'TrendingUp',
+    summary:
+      'Learn how tracking over time can help you understand what is typical for you.',
+
+    content: [
+      'One day of tracking rarely tells the full story. Repeated observations across multiple cycles can reveal patterns that are more specific to you.',
+
+      'You can compare symptoms, pain, mood, energy, sleep, activity, and other daily observations with your own previous cycles.',
+
+      'Saathi can use this history to show patterns such as symptoms that often appear during a particular phase or changes from your usual baseline.',
+
+      'A personal pattern is an observation from your history, not a diagnosis or a guarantee that the same thing will happen every cycle.',
+    ],
+  },
+]
 
 
 // ---------------------------------------------------------------------------
@@ -354,15 +391,15 @@ export const WELLNESS_CATEGORIES = [
     title: 'Nutrition',
     icon: 'Apple',
     color: 'teal',
-    tip: 'Choose a balanced diet that includes iron-rich foods such as lentils, beans, leafy green vegetables, eggs, meat, or other suitable sources.',
+    tip: 'Choose balanced meals and include iron-rich foods such as lentils, beans, leafy green vegetables, eggs, meat, or other suitable sources.',
   },
 
   {
     key: 'exercise',
-    title: 'Exercise',
+    title: 'Movement',
     icon: 'Dumbbell',
     color: 'amber',
-    tip: 'Gentle activities such as walking, stretching, yoga, swimming, or cycling may help some people manage period discomfort.',
+    tip: 'Choose movement that feels comfortable for you. Walking, stretching, yoga, swimming, cycling, and other activities may work well depending on how you feel.',
   },
 
   {
@@ -370,7 +407,7 @@ export const WELLNESS_CATEGORIES = [
     title: 'Pain Management',
     icon: 'Thermometer',
     color: 'rose',
-    tip: 'Heat applied to the lower abdomen or back can help relieve period pain for some people.',
+    tip: 'Heat, rest, gentle movement, and other approaches may help some people manage mild period discomfort.',
   },
 
   {
@@ -378,15 +415,15 @@ export const WELLNESS_CATEGORIES = [
     title: 'Self-Care',
     icon: 'Sparkles',
     color: 'plum',
-    tip: 'Give yourself enough time for rest, sleep, meals, hydration, and activities that help you feel comfortable during difficult days.',
+    tip: 'Make space for rest, sleep, meals, hydration, and activities that help you feel comfortable and supported.',
   },
 
   {
     key: 'hygiene',
-    title: 'Hygiene',
+    title: 'Menstrual Hygiene',
     icon: 'ShieldCheck',
     color: 'teal',
-    tip: 'Change menstrual products regularly, wash your hands before and after handling them, and follow the product’s care instructions.',
+    tip: 'Change menstrual products regularly, wash your hands before and after handling them, and follow the product instructions.',
   },
 
   {
@@ -394,9 +431,9 @@ export const WELLNESS_CATEGORIES = [
     title: 'Mental Wellness',
     icon: 'HeartHandshake',
     color: 'rose',
-    tip: 'Track how you actually feel rather than assuming that a particular cycle phase determines your mood or personality.',
+    tip: 'Notice how you actually feel rather than assuming a cycle phase determines your mood. Tracking your experiences can help you recognize your own patterns.',
   },
-];
+]
 
 
 // ---------------------------------------------------------------------------

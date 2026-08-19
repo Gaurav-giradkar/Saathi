@@ -3,12 +3,22 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // =========================================================
+    // COMMON HELPERS
+    // =========================================================
+
     function signedIn() {
       return request.auth != null;
     }
 
     function mine(uid) {
       return signedIn() && request.auth.uid == uid;
+    }
+
+    function connectionDoc(connectionId) {
+      return get(
+        /databases/$(database)/documents/connections/$(connectionId)
+      );
     }
 
     function isOwner() {
@@ -21,79 +31,172 @@ service cloud.firestore {
         resource.data.get('supporterUid', null) == request.auth.uid;
     }
 
-    // =========================
+    function isActiveMember() {
+      return signedIn() &&
+        resource.data.get('status', '') == 'active' &&
+        (
+          resource.data.get('ownerUid', null) == request.auth.uid ||
+          resource.data.get('supporterUid', null) == request.auth.uid
+        );
+    }
+
+    // =========================================================
     // USERS
-    // =========================
+    // =========================================================
+
     match /users/{uid} {
-      // Signed in users can read user profile documents (e.g. name for connections)
-      allow get: if signedIn();
-      allow list: if mine(uid);
+      // Users can read their own profile.
+      allow get: if mine(uid);
+
+      // No broad user listing.
+      allow list: if false;
+
       allow create, update: if mine(uid);
       allow delete: if false;
 
-      // Private cycle records — only accessible to the account owner
+      // -------------------------
+      // Cycle data
+      // -------------------------
       match /cycles/{cycleId} {
         allow read, write: if mine(uid);
       }
 
-      // Private daily health logs — only accessible to the account owner
+      // -------------------------
+      // Daily health data
+      // -------------------------
       match /healthEntries/{entryId} {
         allow read, write: if mine(uid);
       }
     }
 
-    // =========================
+    // =========================================================
     // INVITATION CODES
-    // =========================
+    // =========================================================
+    //
+    // inviteCodes/{code}
+    //
+    // {
+    //   connectionId: "...",
+    //   status: "pending",
+    //   createdAt: ...
+    // }
+    //
+    // This collection contains only minimal invitation data.
+    // =========================================================
+
     match /inviteCodes/{code} {
-      // Any signed-in user can resolve an invitation code by direct document get
-      allow get: if signedIn();
+
+      // A signed-in supporter can resolve a pending code.
+      // They cannot list the collection.
+      allow get: if signedIn() &&
+        resource.data.get('status', '') == 'pending';
+
       allow list: if false;
 
-      // Owner creates the invite code in the same batch as the connection document
+      // Owner creates the invite code in the same batch
+      // as the connection document.
       allow create: if signedIn() &&
-        request.resource.data.status == 'pending' &&
-        request.resource.data.connectionId is string;
+        request.resource.data.get('status', '') == 'pending' &&
+        request.resource.data.get('connectionId', '') is string &&
+        getAfter(
+          /databases/$(database)/documents/connections/$(request.resource.data.connectionId)
+        ).data.get('ownerUid', null) == request.auth.uid;
 
+      // Invite codes cannot be edited or deleted by clients.
       allow update, delete: if false;
     }
 
-    // =========================
+    // =========================================================
     // CONNECTIONS
-    // =========================
+    // =========================================================
+
     match /connections/{connectionId} {
 
+      // -------------------------------------------------------
+      // CREATE
+      // -------------------------------------------------------
+      //
+      // Only the owner creates a connection.
+      //
       allow create: if signedIn() &&
-        request.resource.data.get('ownerUid', null) == request.auth.uid;
+        request.resource.data.get('ownerUid', null) == request.auth.uid &&
+        request.resource.data.get('status', '') == 'pending';
 
-      // Owner, existing supporter, or a signed-in user resolving a pending unattached invitation
+      // -------------------------------------------------------
+      // SINGLE DOCUMENT READ
+      // -------------------------------------------------------
+      //
+      // Owner:
+      //   can read their own connection.
+      //
+      // Supporter:
+      //   can read a connection after their UID is attached.
+      //
+      // Pending unclaimed invitation:
+      //   a signed-in user may read it after resolving a valid
+      //   invite code so the supporter can attach their UID.
+      //
       allow get: if signedIn() && (
         resource.data.get('ownerUid', null) == request.auth.uid ||
+
         resource.data.get('supporterUid', null) == request.auth.uid ||
+
         (
           resource.data.get('status', '') == 'pending' &&
           resource.data.get('supporterUid', null) == null
         )
       );
 
-      allow list: if signedIn() &&
-        (
-          resource.data.get('ownerUid', null) == request.auth.uid ||
-          resource.data.get('supporterUid', null) == request.auth.uid
-        );
-
-      allow update: if signedIn() && (
-        // Owner can update any field (approve, modify sharing, revoke)
+      // -------------------------------------------------------
+      // LIST / QUERIES
+      // -------------------------------------------------------
+      //
+      // Users can only query connections where they are already
+      // the owner or supporter.
+      //
+      allow list: if signedIn() && (
         resource.data.get('ownerUid', null) == request.auth.uid ||
-        // Supporter attaches own UID to a pending unattached connection
+        resource.data.get('supporterUid', null) == request.auth.uid
+      );
+
+      // -------------------------------------------------------
+      // UPDATE
+      // -------------------------------------------------------
+      //
+      // 1. Owner:
+      //    Can approve / update / revoke their connection.
+      //
+      // 2. Supporter:
+      //    Can attach ONLY their own UID to an unclaimed
+      //    pending connection.
+      //
+      // 3. Active supporter:
+      //    Can leave the connection by setting status=revoked.
+      //
+      allow update: if signedIn() && (
+
+        // Owner controls the connection.
+        resource.data.get('ownerUid', null) == request.auth.uid
+
+        ||
+
+        // Supporter joins a pending invitation.
         (
           resource.data.get('status', '') == 'pending' &&
           resource.data.get('supporterUid', null) == null &&
-          request.resource.data.get('ownerUid', null) == resource.data.get('ownerUid', null) &&
+
+          request.resource.data.get('ownerUid', null) ==
+            resource.data.get('ownerUid', null) &&
+
           request.resource.data.get('status', '') == 'pending' &&
-          request.resource.data.get('supporterUid', null) == request.auth.uid
-        ) ||
-        // Active supporter can leave / revoke their own connection
+
+          request.resource.data.get('supporterUid', null) ==
+            request.auth.uid
+        )
+
+        ||
+
+        // Active supporter leaves.
         (
           resource.data.get('status', '') == 'active' &&
           resource.data.get('supporterUid', null) == request.auth.uid &&
@@ -103,26 +206,28 @@ service cloud.firestore {
 
       allow delete: if false;
 
-      // =========================
+      // =======================================================
       // SANITIZED SHARED PROJECTION
-      // =========================
+      // =======================================================
+
       match /shared/{documentId} {
 
-        function parentConnection() {
-          return get(
-            /databases/$(database)/documents/connections/$(connectionId)
-          );
-        }
-
+        // Only an active owner/supporter can read shared data.
         allow get, list: if signedIn() &&
-          parentConnection().data.status == 'active' &&
+          connectionDoc(connectionId).data.get('status', '') == 'active' &&
           (
-            parentConnection().data.ownerUid == request.auth.uid ||
-            parentConnection().data.supporterUid == request.auth.uid
+            connectionDoc(connectionId).data.get('ownerUid', null) ==
+              request.auth.uid ||
+
+            connectionDoc(connectionId).data.get('supporterUid', null) ==
+              request.auth.uid
           );
 
+        // ONLY the owner can create/update the sanitized
+        // shared projection.
         allow create, update: if signedIn() &&
-          parentConnection().data.ownerUid == request.auth.uid;
+          connectionDoc(connectionId).data.get('ownerUid', null) ==
+            request.auth.uid;
 
         allow delete: if false;
       }

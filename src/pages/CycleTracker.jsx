@@ -36,11 +36,6 @@ export default function CycleTracker() {
     <CycleCalendar cycleSetup={cycle} />
   </Card>
 </div>
-      <Card>
-        <h2 className="font-display font-semibold text-ink-900 text-lg mb-1">Cycle history</h2>
-        <p className="text-sm text-ink-500 mb-4">Length of your last {cycle.history.length} cycles, in days.</p>
-        <CycleLengthChart data={cycle.history} />
-      </Card>
     </div>
   )
 }

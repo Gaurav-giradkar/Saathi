@@ -113,46 +113,64 @@ export default function SupporterProductAdvisor() {
 
       {/* Comparison Table */}
       <Card padded={false} className="overflow-x-auto">
-        <table className="w-full text-sm min-w-[640px]">
-          <thead>
-            <tr className="border-b border-ink-200 text-xs text-ink-700 uppercase tracking-wide bg-ink-50/50">
-              <th className="py-3 px-5 text-left font-semibold">Product Category</th>
-              <th className="py-3 px-5 text-left font-semibold">Absorbency & Capacity</th>
-              <th className="py-3 px-5 text-center font-semibold">Reusable</th>
-            </tr>
-          </thead>
-          <tbody>
-            {PRODUCTS.map((p, i) => (
-              <tr
-                key={p.id}
-                className={i !== PRODUCTS.length - 1 ? 'border-b border-ink-100' : ''}
-              >
-                <td className="py-3 px-5 font-medium text-ink-800">
-                  {p.name}
-                </td>
-                <td className="py-3 px-5 text-ink-600 text-sm">
-                  {p.absorbency}
-                </td>
-                <td className="py-3 px-5 text-center">
-                  {p.reusable ? (
-                    <Check size={16} className="text-teal-500 mx-auto" />
-                  ) : (
-                    <X size={16} className="text-ink-300 mx-auto" />
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </Card>
-
-      {/* Platform Disclaimer */}
-      <Card className="flex items-start gap-3 bg-bg border-ink-100">
-        <Info size={16} className="text-ink-400 mt-0.5 shrink-0" />
-        <p className="text-xs text-ink-500 leading-relaxed">
-          Educational guide only. Saathi is an educational and cycle-support platform and does not sell or endorse specific commercial products.
-        </p>
-      </Card>
+              <table className="w-full text-sm min-w-[640px]">
+                <thead>
+                  <tr className="border-b border-ink-200 text-xs text-ink-1000 uppercase tracking-wide">
+                    <th className="py-3 px-5 text-center font-semibold">
+                      Product
+                    </th>
+      
+                    <th className="py-3 px-5 text-center font-semibold">
+                      Absorbency
+                    </th>
+      
+                    <th className="py-3 px-5 text-center font-semibold">
+                      Reusable
+                    </th>
+                  </tr>
+                </thead>
+      
+                <tbody>
+                  {PRODUCTS.map((p, i) => (
+                    <tr
+                      key={p.id}
+                      className={
+                        i !== PRODUCTS.length - 1
+                          ? 'border-b border-ink-100'
+                          : ''
+                      }
+                    >
+                      {/* Product */}
+                      <td className="py-3 px-5 text-center font-medium text-ink-800">
+                        {p.name}
+                      </td>
+      
+                      {/* Absorbency */}
+                      <td className="py-3 px-5 text-center text-ink-600">
+                        <div className="text-justify max-w-xl mx-auto">
+                          {p.absorbency}
+                        </div>
+                      </td>
+      
+                      {/* Reusable */}
+                      <td className="py-3 px-5 text-center">
+                        {p.reusable ? (
+                          <Check
+                            size={16}
+                            className="text-teal-500 mx-auto"
+                          />
+                        ) : (
+                          <X
+                            size={16}
+                            className="text-ink-300 mx-auto"
+                          />
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </Card>
     </div>
   )
 }

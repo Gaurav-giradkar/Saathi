@@ -16,42 +16,47 @@ const SUPPORTER_WELLNESS_CATEGORIES = [
     title: 'Practical Support',
     icon: 'HeartHandshake',
     color: 'teal',
-    tip: 'Take initiative with daily chores, meal prep, or running errands without waiting to be asked. Practical help removes physical strain.',
+    tip: 'Offer help with meals, chores, errands, or other everyday tasks when it would be useful. Practical support can make difficult days easier.',
   },
+
   {
     key: 'communication',
     title: 'Empathetic Communication',
     icon: 'MessageCircleHeart',
     color: 'plum',
-    tip: 'Ask open questions like "What would feel most helpful right now?" Listen with warmth and avoid giving unsolicited solutions.',
+    tip: 'Ask open questions such as "What would feel most helpful right now?" Listen without judgment and avoid unsolicited solutions.',
   },
+
   {
     key: 'comfort',
     title: 'Comfort & Relief',
     icon: 'Sparkles',
     color: 'rose',
-    tip: 'Offer a heating pad, warm blanket, or hot herbal tea. Creating a cozy, peaceful environment supports physical relaxation.',
+    tip: 'Offer things the person finds comforting, such as a heating pad, warm drink, quiet environment, or help with everyday tasks.',
   },
+
   {
     key: 'boundaries',
     title: 'Respecting Boundaries',
     icon: 'ShieldAlert',
     color: 'amber',
-    tip: 'Needs change day to day. If they need quiet time or space, respect it graciously without taking it personally.',
+    tip: 'Support needs can change from day to day. If they want quiet, privacy, or space, respect their preference without taking it personally.',
   },
+
   {
     key: 'nutrition',
     title: 'Nourishment & Hydration',
     icon: 'Coffee',
     color: 'teal',
-    tip: 'Keep refreshing water, warm soups, and iron-rich snacks handy. Steady hydration and balanced meals help sustain natural energy.',
+    tip: 'Offer water, a meal, or a snack if they would appreciate it. Let them choose what they prefer rather than assuming what they need.',
   },
+
   {
     key: 'patience',
     title: 'Patience & Reassurance',
     icon: 'Heart',
     color: 'rose',
-    tip: 'Be a calming presence. Emotional reassurance and gentle consistency build long-term trust and comfort.',
+    tip: 'Be a calm and dependable presence. Reassurance, patience, and consistency can help someone feel supported without feeling pressured.',
   },
 ]
 

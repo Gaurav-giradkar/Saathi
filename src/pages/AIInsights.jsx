@@ -19,10 +19,10 @@ export default function AIInsights() {
     <div className="flex flex-col gap-6 animate-fadeIn">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
-          <h1 className="font-display text-2xl sm:text-3xl font-semibold text-ink-900">AI insights & predictions</h1>
+          <h1 className="font-display text-2xl sm:text-3xl font-semibold text-ink-900">Saathi AI</h1>
           <p className="text-ink-500 text-sm mt-1">Generated from your logged patterns — always demo data here.</p>
         </div>
-        <PhaseBadge phaseKey={data.cycleInfo.phaseKey} />
+      
       </div>
 
       <Card className="flex items-center gap-4 bg-rose-50/60 border-rose-100">

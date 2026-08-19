@@ -71,10 +71,10 @@ export default function SupporterAIInsights() {
       <div className="flex flex-col gap-6 animate-fadeIn">
         <div>
           <h1 className="font-display text-2xl sm:text-3xl font-semibold text-ink-900">
-            AI insights & context
+            Saathi AI
           </h1>
           <p className="text-ink-500 text-sm mt-1">
-            Contextual guidance for supporters based on explicitly shared updates.
+            Understand what they've shared and how you can support them.
           </p>
         </div>
 
@@ -172,10 +172,10 @@ export default function SupporterAIInsights() {
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
           <h1 className="font-display text-2xl sm:text-3xl font-semibold text-ink-900">
-            AI insights & context
+            Saathi AI
           </h1>
           <p className="text-ink-500 text-sm mt-1">
-            Contextual guidance for supporting <span className="font-semibold text-ink-700">{data.connectedUserName}</span>
+            Understand what they've shared and how you can support  <span className="font-bold text-ink-700">{data.connectedUserName}</span>
           </p>
         </div>
         {phaseKey && <PhaseBadge phaseKey={phaseKey} />}
@@ -194,7 +194,7 @@ export default function SupporterAIInsights() {
             <p className="text-sm text-ink-800 font-medium">
               {shared.cyclePhase && `Current Phase: ${shared.cyclePhase}. `}
               {shared.expectedPeriod && (
-                `Next period estimated around ${new Date(shared.expectedPeriod).toLocaleDateString('en-IN', { day: 'numeric', month: 'long' })}.`
+                `They've shared that their next period is estimated around ${new Date(shared.expectedPeriod).toLocaleDateString('en-IN', { day: 'numeric', month: 'long' })}.`
               )}
             </p>
           </div>
@@ -206,7 +206,7 @@ export default function SupporterAIInsights() {
         <div className="flex items-center gap-2 mb-1">
           <Sparkles size={18} className="text-teal-600" />
           <h2 className="font-display font-semibold text-ink-900 text-lg">
-            Personalized Supporter Insights
+            How you can support today
           </h2>
         </div>
         <p className="text-sm text-ink-500 mb-4">
@@ -218,14 +218,6 @@ export default function SupporterAIInsights() {
             <InsightCard key={ins.id} type={ins.type} title={ins.title} body={ins.body} />
           ))}
         </div>
-      </Card>
-
-      {/* Medical Disclaimer Alert */}
-      <Card className="flex items-start gap-3 bg-plum-50/60 border-plum-100">
-        <Info size={18} className="text-plum-600 mt-0.5 shrink-0" />
-        <p className="text-xs sm:text-sm text-plum-900 leading-relaxed">
-          These insights are educational and based solely on explicitly shared preferences. Saathi does not provide medical diagnoses or claim clinical causation.
-        </p>
       </Card>
     </div>
   )

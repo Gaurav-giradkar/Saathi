@@ -20,7 +20,7 @@ export default function HealthWellness() {
           <h1 className="font-display text-2xl sm:text-3xl font-semibold text-ink-900">Health & wellness</h1>
           <p className="text-ink-500 text-sm mt-1">Recommendations tailored to your current phase.</p>
         </div>
-        <PhaseBadge phaseKey={data.phaseKey} />
+        
       </div>
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">

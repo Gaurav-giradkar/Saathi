@@ -11,7 +11,7 @@ export default function EducationCenter() {
     <div className="flex flex-col gap-6 animate-fadeIn">
       <div>
         <h1 className="font-display text-2xl sm:text-3xl font-semibold text-ink-900">Education center</h1>
-        <p className="text-ink-500 text-sm mt-1">Clear, evidence-based explainers — not diagnoses.</p>
+        <p className="text-ink-500 text-sm mt-1">Understand your cycle, your body, and the changes you experience.</p>
       </div>
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
