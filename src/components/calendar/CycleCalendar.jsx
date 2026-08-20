@@ -1,7 +1,8 @@
 import React, { useMemo, useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import SelectedDayPanel from './SelectedDayPanel.jsx'
 
-const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
+const WEEKDAYS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
 const MONTHS = [
   'January',
   'February',
@@ -18,20 +19,37 @@ const MONTHS = [
 ]
 
 const CATEGORY_META = {
-  period: { color: '#E85D75', label: 'Menstrual Phase' },
-  postPeriod: { color: '#443A61', label: 'Follicular Phase' },
-  ovulation: { color: '#3D8579', label: 'Ovulation' },
-  prePeriod: { color: '#E8A94A', label: 'Luteal Phase' },
+  period: {
+    color: '#E05370',
+    label: 'Menstrual Phase',
+    ringColor: '#E05370',
+  },
+  postPeriod: {
+    color: '#352E4E',
+    label: 'Follicular Phase',
+    ringColor: '#352E4E',
+  },
+  ovulation: {
+    color: '#2D8A7B',
+    label: 'Ovulation',
+    ringColor: '#2D8A7B',
+  },
+  prePeriod: {
+    color: '#F3BA5B',
+    label: 'Luteal Phase',
+    ringColor: '#F3BA5B',
+  },
 }
 
 function mod(n, m) {
   return ((n % m) + m) % m
 }
 
-export function getCycleCategoryForDate(date, cycleSetup) {
-  const { lastPeriodStart, cycleLength, periodLength } = cycleSetup
+export function getCycleCategoryForDate(date, cycleSetup = {}) {
+  const { lastPeriodStart, cycleLength = 28, periodLength = 5 } = cycleSetup
+  if (!lastPeriodStart) return null
 
-  const start = new Date(lastPeriodStart)
+  const start = new Date(`${lastPeriodStart}T00:00:00`)
   start.setHours(0, 0, 0, 0)
 
   const d = new Date(date)
@@ -40,36 +58,69 @@ export function getCycleCategoryForDate(date, cycleSetup) {
   const msPerDay = 1000 * 60 * 60 * 24
   const diffDays = Math.round((d - start) / msPerDay)
 
-  // Cycle day: 1 → cycleLength
-  const dayInCycle = mod(diffDays, cycleLength) + 1
+  const dayInCycle = mod(diffDays, Number(cycleLength)) + 1
+  const ovulationDay = Number(cycleLength) - 14
 
-  // Estimated ovulation is approximately 14 days before
-  // the next period.
-  const ovulationDay = cycleLength - 14
-
-  // 1. Menstrual Phase
-  if (dayInCycle <= periodLength) {
-    return 'period'
-  }
-
-  // 2. Ovulation
-  if (dayInCycle === ovulationDay) {
-    return 'ovulation'
-  }
-
-  // 3. Follicular Phase
-  if (dayInCycle < ovulationDay) {
-    return 'postPeriod'
-  }
-
-  // 4. Luteal Phase
+  if (dayInCycle <= Number(periodLength)) return 'period'
+  if (dayInCycle === ovulationDay) return 'ovulation'
+  if (dayInCycle < ovulationDay) return 'postPeriod'
   return 'prePeriod'
 }
 
-export default function CycleCalendar({ cycleSetup, selectedDate, onSelectDay }) {
+export function getCycleDayForDate(date, cycleSetup = {}) {
+  const { lastPeriodStart, cycleLength = 28 } = cycleSetup
+  if (!lastPeriodStart) return null
+
+  const start = new Date(`${lastPeriodStart}T00:00:00`)
+  start.setHours(0, 0, 0, 0)
+
+  const d = new Date(date)
+  d.setHours(0, 0, 0, 0)
+
+  const msPerDay = 1000 * 60 * 60 * 24
+  const diffDays = Math.round((d - start) / msPerDay)
+  return mod(diffDays, Number(cycleLength)) + 1
+}
+
+/* Subtle corner vine decoration on the bottom-left of the main card */
+function BotanicalCornerVine({ className = '' }) {
+  return (
+    <svg
+      viewBox="0 0 140 100"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+      aria-hidden="true"
+    >
+      <path
+        d="M8 92 Q45 75 80 40 Q105 20 128 6"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+        opacity="0.4"
+      />
+      <path d="M40 76 Q46 62 38 52" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" opacity="0.35" />
+      <circle cx="36" cy="50" r="3.5" fill="currentColor" fillOpacity="0.3" />
+      <path d="M68 52 Q82 48 90 38" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" opacity="0.35" />
+      <circle cx="92" cy="36" r="3.5" fill="currentColor" fillOpacity="0.3" />
+      <path d="M102 30 Q114 34 122 28" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" opacity="0.35" />
+      <circle cx="124" cy="26" r="3.5" fill="currentColor" fillOpacity="0.3" />
+    </svg>
+  )
+}
+
+export default function CycleCalendar({
+  cycleSetup,
+  selectedDate: controlledSelectedDate,
+  onSelectDay,
+  healthLogs = {},
+}) {
   const today = new Date()
+  const [internalSelectedDate, setInternalSelectedDate] = useState(() => new Date())
+  const selectedDate = controlledSelectedDate !== undefined ? controlledSelectedDate : internalSelectedDate
+
   const [viewDate, setViewDate] = useState(
-    new Date(today.getFullYear(), today.getMonth(), 1),
+    () => new Date(today.getFullYear(), today.getMonth(), 1)
   )
 
   const weeks = useMemo(() => {
@@ -105,102 +156,156 @@ export default function CycleCalendar({ cycleSetup, selectedDate, onSelectDay })
   const isSelected = (d) =>
     d && selectedDate && d.toDateString() === selectedDate.toDateString()
 
+  const handleSelectDate = (date) => {
+    if (controlledSelectedDate === undefined) {
+      setInternalSelectedDate(date)
+    }
+    onSelectDay?.(date)
+  }
+
   return (
-    <div className="w-full">
-      <div className="flex items-center justify-between mb-2">
-        <button
-          type="button"
-          onClick={() =>
-            setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1))
-          }
-          className="p-2 rounded-full hover:bg-ink-100 text-ink-600 transition-colors"
-          aria-label="Previous month"
-        >
-          <ChevronLeft size={18} />
-        </button>
+    <div className="w-full relative">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-stretch">
 
-        <h3 className="font-display font-semibold text-ink-900 text-lg">
-          {MONTHS[viewDate.getMonth()]} {viewDate.getFullYear()}
-        </h3>
-
-        <button
-          type="button"
-          onClick={() =>
-            setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1))
-          }
-          className="p-2 rounded-full hover:bg-ink-100 text-ink-600 transition-colors"
-          aria-label="Next month"
-        >
-          <ChevronRight size={18} />
-        </button>
-      </div>
-
-      <div className="grid grid-cols-7 mb-1 max-w-md mx-auto">
-        {WEEKDAYS.map((weekday, index) => (
-          <div
-            key={`${weekday}-${index}`}
-            className="text-center text-[10px] font-semibold text-ink-400 uppercase py-1"
-          >
-            {weekday}
-          </div>
-        ))}
-      </div>
-
-      <div className="flex flex-col gap-0.5 max-w-md  mx-auto">
-          {weeks.map((row, rowIndex) => (
-          <div key={rowIndex} className="grid grid-cols-7 gap-0.5">
-            {row.map((date, dayIndex) => {
-              if (!date) {
-                return <div key={dayIndex} className="aspect-square" aria-hidden="true" />
+        {/* ==================================================
+            LEFT COLUMN: CALENDAR & PHASE LEGEND (~58% on lg)
+            ================================================== */}
+        <div className="lg:col-span-7 flex flex-col gap-4 lg:pr-6 lg:border-r lg:border-[#EFE5EE]">
+          {/* Month & Navigation Header */}
+          <div className="flex items-center justify-between px-1">
+            <button
+              type="button"
+              onClick={() =>
+                setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1))
               }
+              className="w-10 h-10 rounded-full border border-ink-100/90 bg-white shadow-2xs flex items-center justify-center text-ink-600 hover:text-ink-900 hover:bg-ink-50 active:scale-95 transition-all"
+              aria-label="Previous month"
+            >
+              <ChevronLeft size={18} />
+            </button>
 
-              const category = getCycleCategoryForDate(date, cycleSetup)
-              const meta = category ? CATEGORY_META[category] : null
+            <h3 className="font-display font-bold text-ink-900 text-xl sm:text-2xl tracking-tight text-center flex items-center justify-center gap-2.5">
+              <span className="text-[#8064A2]/50 text-sm hidden sm:inline select-none">➔</span>
+              <span>{MONTHS[viewDate.getMonth()]} {viewDate.getFullYear()}</span>
+              <span className="text-[#8064A2]/50 text-sm hidden sm:inline select-none">✦</span>
+            </h3>
 
-              return (
-                <div key={dayIndex} className="flex items-center justify-center aspect-square">
-                  <button
-                    type="button"
-                    onClick={() => onSelectDay?.(date)}
-                    aria-label={`Select ${date.toDateString()}`}
-                    className={[
-                      'w-full h-full max-w-[22px] max-h-[22px]',
-                      'sm:max-w-[24px] sm:max-h-[24px]',
-                      'lg:max-w-[26px] lg:max-h-[26px]',
-                      'rounded-full flex items-center justify-center',
-                      'text-[10px] sm:text-sm font-semibold transition-transform hover:scale-105',
-                      isToday(date) ? 'ring-2 ring-offset-2 ring-ink-800' : '',
-                      isSelected(date) ? 'ring-2 ring-offset-2 ring-brand-coral' : '',
-                    ].join(' ')}
-                    style={{
-                      backgroundColor: meta ? meta.color : 'transparent',
-                      color: meta ? '#ffffff' : '#453640',
-                    }}
-                  >
-                    {date.getDate()}
-                  </button>
+            <button
+              type="button"
+              onClick={() =>
+                setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1))
+              }
+              className="w-10 h-10 rounded-full border border-ink-100/90 bg-white shadow-2xs flex items-center justify-center text-ink-600 hover:text-ink-900 hover:bg-ink-50 active:scale-95 transition-all"
+              aria-label="Next month"
+            >
+              <ChevronRight size={18} />
+            </button>
+          </div>
+
+          {/* Enclosed Calendar Table Card */}
+          <div className="border border-[#EBE1ED] rounded-2xl overflow-hidden bg-white/90 shadow-2xs">
+            {/* Weekday Header Row */}
+            <div className="grid grid-cols-7 border-b border-[#EBE1ED] bg-[#FAF7FC]">
+              {WEEKDAYS.map((weekday, index) => (
+                <div
+                  key={`${weekday}-${index}`}
+                  className="text-center text-[11px] sm:text-xs font-bold tracking-wider text-[#958A99] uppercase py-3.5 border-r border-[#EBE1ED]/60 last:border-r-0"
+                >
+                  {weekday}
                 </div>
-              )
-            })}
+              ))}
+            </div>
+
+            {/* Calendar Grid Cells */}
+            <div className="divide-y divide-[#EBE1ED]/50">
+              {weeks.map((row, rowIndex) => (
+                <div key={rowIndex} className="grid grid-cols-7 divide-x divide-[#EBE1ED]/50">
+                  {row.map((date, dayIndex) => {
+                    if (!date) {
+                      return (
+                        <div
+                          key={dayIndex}
+                          className="min-h-[50px] sm:min-h-[56px] md:min-h-[60px] flex items-center justify-center p-1 sm:p-1.5 bg-white/40"
+                          aria-hidden="true"
+                        />
+                      )
+                    }
+
+                    const category = getCycleCategoryForDate(date, cycleSetup)
+                    const meta = category ? CATEGORY_META[category] : null
+                    const selected = isSelected(date)
+                    const todayDate = isToday(date)
+
+                    return (
+                      <div
+                        key={dayIndex}
+                        className="min-h-[50px] sm:min-h-[56px] md:min-h-[60px] flex items-center justify-center p-1 sm:p-1.5"
+                      >
+                        <button
+                          type="button"
+                          onClick={() => handleSelectDate(date)}
+                          aria-label={`Select ${date.toDateString()}`}
+                          className={[
+                            'w-10 h-10 sm:w-11 sm:h-11',
+                            'rounded-full flex items-center justify-center relative',
+                            'text-xs sm:text-sm font-bold transition-all duration-150',
+                            'hover:scale-105 active:scale-95',
+                            meta ? 'shadow-2xs' : 'hover:bg-ink-100/60',
+                            selected
+                              ? 'ring-2 ring-offset-[3px] ring-offset-white shadow-xs scale-105 z-10'
+                              : todayDate
+                              ? 'ring-2 ring-offset-1 ring-ink-300'
+                              : '',
+                          ].join(' ')}
+                          style={{
+                            backgroundColor: meta ? meta.color : 'transparent',
+                            color: meta ? '#ffffff' : '#4A3654',
+                            ...(selected && meta ? { '--tw-ring-color': meta.ringColor } : {}),
+                          }}
+                        >
+                          {date.getDate()}
+                        </button>
+                      </div>
+                    )
+                  })}
+                </div>
+              ))}
+            </div>
           </div>
-        ))}
+
+          {/* Phase Legend (Fixed directly below calendar table) */}
+          <div className="border border-[#EBE1ED] rounded-2xl px-5 sm:px-6 py-3 bg-white/80 shadow-2xs flex flex-wrap items-center justify-around gap-3 text-xs text-ink-600 font-medium">
+            {Object.values(CATEGORY_META).map((meta) => (
+              <div
+                key={meta.label}
+                className="flex items-center gap-2"
+              >
+                <span
+                  className="w-2.5 h-2.5 rounded-full shrink-0 shadow-2xs"
+                  style={{ backgroundColor: meta.color }}
+                  aria-hidden="true"
+                />
+                <span>{meta.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ==================================================
+            RIGHT COLUMN: SELECTED DAY PANEL (~42% on lg)
+            ================================================== */}
+        <div className="lg:col-span-5 flex flex-col h-full lg:pl-1">
+          <SelectedDayPanel
+            selectedDate={selectedDate}
+            cycleSetup={cycleSetup}
+            healthLogs={healthLogs}
+          />
+        </div>
+
       </div>
 
-      <div className="flex flex-wrap gap-x-4 gap-y-2 mt-5 pt-4 border-t border-ink-100">
-        {Object.values(CATEGORY_META).map((meta) => (
-          <div
-            key={meta.label}
-            className="flex items-center gap-1.5 text-xs text-ink-600 font-medium"
-          >
-            <span
-              className="w-2.5 h-2.5 rounded-full"
-              style={{ backgroundColor: meta.color }}
-              aria-hidden="true"
-            />
-            {meta.label}
-          </div>
-        ))}
-      </div>
+      {/* Decorative corner botanical vine on the bottom-left of main card */}
+      <BotanicalCornerVine className="absolute -bottom-2 -left-2 w-32 h-20 text-[#8064A2]/30 pointer-events-none select-none" />
     </div>
   )
 }
