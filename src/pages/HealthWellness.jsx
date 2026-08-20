@@ -211,10 +211,13 @@ export default function HealthWellness() {
               "
             >
               <RecommendationCard
-                icon={category.icon}
-                title={category.title}
-                tip={category.tip}
-                color={category.color}
+                key={c.key}
+                icon={c.icon}
+                title={c.title}
+                tip={c.tip}
+                color={c.color}
+                insights={c.insights}
+                actions={c.actions}
               />
             </button>
           ))}

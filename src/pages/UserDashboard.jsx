@@ -11,7 +11,7 @@ import Button from '../components/common/Button.jsx'
 import {
   getUserData, getCycleData, getInsights, getRecommendations, getHealthData,
 } from '../data/api.js'
-import { MOOD_OPTIONS } from '../data/mockData.js'
+
 import saathiGirl from '../images/saathi-girl.png'
 
 function formatDate(iso) {
@@ -33,18 +33,35 @@ export default function UserDashboard() {
   const [todayLog, setTodayLog] = useState(null)
 
   useEffect(() => {
-    getUserData().then(setUser)
-    getCycleData().then(setCycle)
-    getInsights().then(setInsights)
-    getRecommendations().then(setRecs)
-    getHealthData().then(setTodayLog)
-  }, [])
-
+  Promise.all([
+    getUserData(),
+    getCycleData(),
+    getInsights(),
+    getRecommendations(),
+    getHealthData(),
+  ])
+    .then(([userData, cycleData, insightData, recommendationData, healthData]) => {
+      setUser(userData)
+      setCycle(cycleData)
+      setInsights(insightData)
+      setRecs(recommendationData)
+      setTodayLog(healthData)
+    })
+    .catch((error) => {
+      console.error('Dashboard load error:', error)
+    })
+}, [])
+  
   if (!user || !cycle) {
-    return <div className="animate-pulse text-ink-400 text-sm py-20 text-center">Loading your dashboard…</div>
+    return (
+      <div className="animate-pulse text-ink-400 text-sm py-20 text-center">
+        Loading your dashboard…
+      </div>
+    )
   }
 
-  const moodMeta = MOOD_OPTIONS.find((m) => m.key === todayLog?.mood)
+  const mood = todayLog?.moods?.[0] || todayLog?.mood || null
+  
 
   return (
    <div className="flex flex-col gap-6 animate-fadeIn bg-[#FFF8FB] min-h-screen p-4 sm:p-6">
@@ -107,107 +124,122 @@ export default function UserDashboard() {
 
 
     {/* CHECK-IN ITEMS */}
-    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+<div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
 
-      {/* PAIN */}
-      <div className="rounded-2xl bg-rose-50 p-4 text-center hover:shadow-sm transition">
-        <div className="text-2xl mb-2">🤕</div>
-
-        <p className="text-sm font-semibold text-ink-800">
-          Pain
-        </p>
-
-        <p className="text-xs text-rose-600 mt-1 font-medium">
-          {todayLog?.pain
-            ? `${todayLog.pain}/10`
-            : 'Not logged'}
-        </p>
-      </div>
-
-
-      {/* MOOD */}
-      <div className="rounded-2xl bg-amber-50 p-4 text-center hover:shadow-sm transition">
-        <div className="text-2xl mb-2">
-          {moodMeta?.emoji || '😊'}
-        </div>
-
-        <p className="text-sm font-semibold text-ink-800">
-          Mood
-        </p>
-
-        <p className="text-xs text-amber-600 mt-1 font-medium">
-          {moodMeta?.label || 'Not logged'}
-        </p>
-      </div>
-
-
-      {/* ENERGY */}
-      <div className="rounded-2xl bg-purple-50 p-4 text-center hover:shadow-sm transition">
-        <div className="text-2xl mb-2">
-          ⚡
-        </div>
-
-        <p className="text-sm font-semibold text-ink-800">
-          Energy
-        </p>
-
-        <p className="text-xs text-purple-600 mt-1 font-medium">
-          {todayLog?.energy || 'Not logged'}
-        </p>
-      </div>
-
-
-      {/* SLEEP */}
-      <div className="rounded-2xl bg-blue-50 p-4 text-center hover:shadow-sm transition">
-        <div className="text-2xl mb-2">
-          😴
-        </div>
-
-        <p className="text-sm font-semibold text-ink-800">
-          Sleep
-        </p>
-
-        <p className="text-xs text-blue-600 mt-1 font-medium">
-          {todayLog?.sleep
-            ? `${todayLog.sleep} hrs`
-            : 'Not logged'}
-        </p>
-      </div>
-
-
-      {/* WATER */}
-      <div className="rounded-2xl bg-cyan-50 p-4 text-center hover:shadow-sm transition">
-        <div className="text-2xl mb-2">
-          💧
-        </div>
-
-        <p className="text-sm font-semibold text-ink-800">
-          Water
-        </p>
-
-        <p className="text-xs text-cyan-600 mt-1 font-medium">
-          {todayLog?.water
-            ? `${todayLog.water} glasses`
-            : 'Not logged'}
-        </p>
-      </div>
-
-      <div className="rounded-2xl bg-green-50 p-4 text-center hover:shadow-sm transition">
-        <div className="text-2xl mb-2">
-          ᯓ🏃🏻‍♀️‍➡️
-        </div>
-
-        <p className="text-sm font-semibold text-ink-800">
-          Exercise
-        </p>
-
-        <p className="text-xs text-cyan-600 mt-1 font-medium">
-          {todayLog?.Exercise
-            ? `${todayLog.Exercise} minutes`
-            : 'Not logged'}
-        </p>
-      </div>
+  {/* PAIN */}
+  <div className="rounded-2xl bg-rose-50 p-4 text-center hover:shadow-sm transition">
+    <div className="text-2xl mb-2">
+      🤕
     </div>
+
+    <p className="text-sm font-semibold text-ink-800">
+      Pain
+    </p>
+
+    <p className="text-xs text-rose-600 mt-1 font-medium">
+      {todayLog?.pain !== undefined &&
+      todayLog?.pain !== null
+        ? `${todayLog.pain}/10`
+        : 'Not logged'}
+    </p>
+  </div>
+
+
+  {/* MOOD */}
+  <div className="rounded-2xl bg-amber-50 p-4 text-center hover:shadow-sm transition">
+    <div className="text-2xl mb-2">
+      😊
+    </div>
+
+    <p className="text-sm font-semibold text-ink-800">
+      Mood
+    </p>
+
+    <p className="text-xs text-amber-600 mt-1 font-medium">
+      {mood || 'Not logged'}
+    </p>
+  </div>
+
+
+  {/* ENERGY */}
+  <div className="rounded-2xl bg-purple-50 p-4 text-center hover:shadow-sm transition">
+    <div className="text-2xl mb-2">
+      ⚡
+    </div>
+
+    <p className="text-sm font-semibold text-ink-800">
+      Energy
+    </p>
+
+    <p className="text-xs text-purple-600 mt-1 font-medium">
+      {todayLog?.energy || 'Not logged'}
+    </p>
+  </div>
+
+
+  {/* SLEEP */}
+  <div className="rounded-2xl bg-blue-50 p-4 text-center hover:shadow-sm transition">
+    <div className="text-2xl mb-2">
+      😴
+    </div>
+
+    <p className="text-sm font-semibold text-ink-800">
+      Sleep
+    </p>
+
+    <p className="text-xs text-blue-600 mt-1 font-medium">
+      {todayLog?.sleep !== undefined &&
+      todayLog?.sleep !== null
+        ? `${todayLog.sleep} hrs`
+        : 'Not logged'}
+    </p>
+  </div>
+
+
+  {/* WATER */}
+  <div className="rounded-2xl bg-cyan-50 p-4 text-center hover:shadow-sm transition">
+    <div className="text-2xl mb-2">
+      💧
+    </div>
+
+    <p className="text-sm font-semibold text-ink-800">
+      Water
+    </p>
+
+    <p className="text-xs text-cyan-600 mt-1 font-medium">
+      {todayLog?.water !== undefined &&
+      todayLog?.water !== null
+        ? `${todayLog.water} glasses`
+        : todayLog?.waterLiters !== undefined &&
+          todayLog?.waterLiters !== null
+          ? `${todayLog.waterLiters} L`
+          : 'Not logged'}
+    </p>
+  </div>
+
+
+  {/* EXERCISE */}
+  <div className="rounded-2xl bg-green-50 p-4 text-center hover:shadow-sm transition">
+    <div className="text-2xl mb-2">
+      🏃🏻‍♀️
+    </div>
+
+    <p className="text-sm font-semibold text-ink-800">
+      Exercise
+    </p>
+
+    <p className="text-xs text-green-600 mt-1 font-medium">
+      {todayLog?.exerciseMinutes !== undefined &&
+      todayLog?.exerciseMinutes !== null
+        ? `${todayLog.exerciseMinutes} min`
+        : todayLog?.exerciseActivities?.length &&
+          !todayLog.exerciseActivities.includes('None')
+          ? todayLog.exerciseActivities[0]
+          : 'Not logged'}
+    </p>
+  </div>
+
+</div>
 
 
     {/* IF NOTHING LOGGED */}

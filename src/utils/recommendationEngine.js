@@ -359,10 +359,11 @@ export function detectSignals(input = {}) {
     ]),
 
     highEnergy: containsAny(data.energy, [
+      'Above Average',
       'High',
       'Very High',
     ]),
-
+    
     // Sleep
     shortSleep:
       data.sleep !== null &&

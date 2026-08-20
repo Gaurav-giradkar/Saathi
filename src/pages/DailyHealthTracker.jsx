@@ -300,29 +300,197 @@ export default function DailyHealthTracker() {
     }
   }
 
-  const save = async () => {
+const save = async () => {
   setSaving(true)
 
   try {
-    await saveHealthLog(selectedDate, {
-      ...record,
-      moods: record.moods,
-      mood: record.moods[0]?.toLowerCase() || null,
-      sleep: record.sleep === '' ? null : Number(record.sleep),
-      waterLiters:
-        record.waterLiters === '' ? null : Number(record.waterLiters),
-      water:
-        record.waterLiters === ''
-          ? null
-          : Math.round(Number(record.waterLiters) / 0.25),
+    const payload = {
+      // Basic
+      date: selectedDate,
 
-      periodStarted: record.periodStatus === 'period',
-      periodStatus: record.periodStatus,
-    })
+      // Symptoms
+      symptoms: Array.isArray(record.symptoms)
+        ? record.symptoms
+        : [],
+
+      otherSymptom: record.otherSymptom?.trim() || '',
+
+      // Pain
+      pain: Number(record.pain) || 0,
+
+      painLocations: Array.isArray(record.painLocations)
+        ? record.painLocations
+        : [],
+
+      otherPainLocation:
+        record.otherPainLocation?.trim() || '',
+
+      painTypes: Array.isArray(record.painTypes)
+        ? record.painTypes
+        : [],
+
+      otherPainType:
+        record.otherPainType?.trim() || '',
+
+      // Mood
+      moods: Array.isArray(record.moods)
+        ? record.moods
+        : [],
+
+      mood:
+        Array.isArray(record.moods) && record.moods.length > 0
+          ? String(record.moods[0]).toLowerCase()
+          : null,
+
+      // Energy
+      energy: record.energy || '',
+
+      usualActivityLimited:
+        Boolean(record.usualActivityLimited),
+
+      // Sleep
+      sleep:
+        record.sleep === '' || record.sleep == null
+          ? null
+          : Number(record.sleep),
+
+      sleepQuality:
+        record.sleepQuality || '',
+
+      sleepIssues: Array.isArray(record.sleepIssues)
+        ? record.sleepIssues
+        : [],
+
+      // Hydration
+      waterLiters:
+        record.waterLiters === '' ||
+        record.waterLiters == null
+          ? null
+          : Number(record.waterLiters),
+
+      water:
+        record.waterLiters === '' ||
+        record.waterLiters == null
+          ? null
+          : Math.round(
+              Number(record.waterLiters) / 0.25
+            ),
+
+      // Exercise
+      exerciseActivities:
+        Array.isArray(record.exerciseActivities)
+          ? record.exerciseActivities
+          : [],
+
+      otherExercise:
+        record.otherExercise?.trim() || '',
+
+      exerciseIntensity:
+        record.exerciseIntensity || '',
+
+      exerciseMinutes:
+        record.exerciseMinutes === '' ||
+        record.exerciseMinutes == null
+          ? null
+          : Number(record.exerciseMinutes),
+
+      // Meals
+      meals: Array.isArray(record.meals)
+        ? record.meals
+        : [],
+
+      otherMeal:
+        record.otherMeal?.trim() || '',
+
+      appetite:
+        record.appetite || '',
+
+      cravings: Array.isArray(record.cravings)
+        ? record.cravings
+        : [],
+
+      otherCraving:
+        record.otherCraving?.trim() || '',
+
+      // Wellbeing
+      activity:
+        record.activity || '',
+
+      stress:
+        record.stress || '',
+
+      mentalWellbeing:
+        Array.isArray(record.mentalWellbeing)
+          ? record.mentalWellbeing
+          : [],
+
+      concentration:
+        record.concentration || '',
+
+      // Period
+      bleeding:
+        record.bleeding || '',
+
+      flowChange:
+        record.flowChange || '',
+
+      periodStarted:
+        record.periodStatus === 'period',
+
+      periodStatus:
+        record.periodStatus || 'none',
+
+      // Products
+      productOptions:
+        Array.isArray(record.productOptions)
+          ? record.productOptions
+          : [],
+
+      otherProduct:
+        record.otherProduct?.trim() || '',
+
+      // Relief
+      relief:
+        Array.isArray(record.relief)
+          ? record.relief
+          : [],
+
+      otherRelief:
+        record.otherRelief?.trim() || '',
+
+      // Personal note
+      notes:
+        record.notes || '',
+    }
+
+    console.log('SAATHI SAVE PAYLOAD:', payload)
+
+    const saved = await saveHealthLog(
+      selectedDate,
+      payload
+    )
+
+    console.log('SAATHI SAVED:', saved)
+
+    // Verify the exact Firestore document immediately
+    const verified = await getHealthData(selectedDate)
+
+    console.log(
+      'SAATHI FIREBASE VERIFIED:',
+      verified
+    )
 
     showToast('Check-In saved')
   } catch (error) {
-    showToast(error.message, 'error')
+    console.error(
+      'SAATHI SAVE ERROR:',
+      error
+    )
+
+    showToast(
+      error?.message || 'Failed to save check-in',
+      'error'
+    )
   } finally {
     setSaving(false)
   }
@@ -660,11 +828,7 @@ export default function DailyHealthTracker() {
 
         <Chips
           options={lists.exerciseActivities.slice(0, 7)}
-          value={
-            record.exerciseActivities.length
-              ? record.exerciseActivities
-              : array(record.exercise)
-          }
+          value={record.exerciseActivities}
           onChange={(v) => set('exerciseActivities', v)}
           none="None"
           label="Common exercise activities"

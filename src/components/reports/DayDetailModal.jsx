@@ -29,7 +29,7 @@ export default function DayDetailModal({ log, cycleInfo, open, onClose }) {
 
   return (
     <Modal open={open} onClose={onClose} title={formattedDate} size="lg">
-      <div className="flex flex-col gap-4 text-sm max-h-[70vh] overflow-y-auto pr-1">
+      <div className="flex flex-col gap-4 text-sm">
 
         {/* Symptoms Section */}
         {symptoms.length > 0 && (

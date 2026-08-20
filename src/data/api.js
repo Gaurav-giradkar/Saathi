@@ -2,6 +2,7 @@ import {
   createUserWithEmailAndPassword, sendPasswordResetEmail, signInWithEmailAndPassword,
   signOut as firebaseSignOut,
 } from 'firebase/auth'
+import { generatePersonalizedRecommendations } from '../utils/recommendationEngine.js'
 import {
   collection, doc, getDoc, getDocs, limit, orderBy, query, serverTimestamp,
   setDoc, updateDoc, where, writeBatch,
@@ -12,7 +13,16 @@ import {
   SHARING_CATEGORIES, getPhaseForDay,
 } from './mockData.js'
 
-const todayISO = () => new Date().toISOString().slice(0, 10)
+const todayISO = () => {
+  const now = new Date()
+
+  const year = now.getFullYear()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const day = String(now.getDate()).padStart(2, '0')
+
+  return `${year}-${month}-${day}`
+}
+
 const requireFirebase = () => {
   if (!firebaseConfigured || !auth || !db) throw new Error(firebaseConfigError)
 }
@@ -157,21 +167,167 @@ function validateHealthEntry(entry) {
   numberInRange(entry.waterLiters, 0, 10, 'Water intake')
   numberInRange(entry.exerciseMinutes, 0, 1440, 'Exercise duration')
   const requiredOtherText = [
-    ['exerciseActivities', 'Other', 'otherExercise', 'Enter the other exercise.'],
-    ['meals', 'Other', 'otherMeal', 'Enter the other meal or food.'],
-    ['cravings', 'Other', 'otherCraving', 'Enter the other craving.'],
-    ['protectionUsed', 'Other', 'otherProtection', 'Enter the other protection used.'],
-    ['productOptions', 'Other', 'otherProduct', 'Enter the other product used.'],
-    ['relief', 'Other', 'otherRelief', 'Enter the other relief used.'],
-  ]
+  [
+    'exerciseActivities',
+    'Other',
+    'otherExercise',
+    'Enter the other exercise.',
+  ],
+  [
+    'meals',
+    'Other',
+    'otherMeal',
+    'Enter the other meal or food.',
+  ],
+  [
+    'cravings',
+    'Other',
+    'otherCraving',
+    'Enter the other craving.',
+  ],
+  [
+    'productOptions',
+    'Other',
+    'otherProduct',
+    'Enter the other product used.',
+  ],
+  [
+    'relief',
+    'Other',
+    'otherRelief',
+    'Enter the other relief used.',
+  ],
+]
   requiredOtherText.forEach(([selectionField, otherOption, textField, message]) => {
     if (Array.isArray(entry[selectionField]) && entry[selectionField].includes(otherOption) && !entry[textField]) throw new Error(message)
   })
 }
-export async function saveHealthLog(date, entry) { const normalisedEntry = normaliseHealthEntry(entry); validateHealthEntry(normalisedEntry); const user = requireUser(); const data = { ...normalisedEntry, date, updatedAt: serverTimestamp() }; await setDoc(doc(db, 'users', user.uid, 'healthEntries', date), data, { merge: true }); await publishSharedProjection(user.uid); return { ...normalisedEntry, date } }
-export async function getInsights() { const cycle = await getCycleData(); return { insights: INSIGHT_TEMPLATES.map((item, id) => ({ id, ...item })), painTrend: [], cycleInfo: cycle } }
-export async function getRecommendations() { const cycle = await getCycleData(); return { phaseKey: cycle.phaseKey, categories: WELLNESS_CATEGORIES } }
+export async function saveHealthLog(date, entry) {
+  const user = requireUser()
 
+  console.log('API RECEIVED:', entry)
+
+  const normalisedEntry = normaliseHealthEntry(entry)
+
+  console.log('API NORMALISED:', normalisedEntry)
+
+  validateHealthEntry(normalisedEntry)
+
+  const data = {
+    ...normalisedEntry,
+    date,
+    updatedAt: serverTimestamp(),
+  }
+
+  console.log('FIREBASE WRITE DATA:', data)
+
+  const ref = doc(
+  db,
+  'users',
+  user.uid,
+  'healthEntries',
+  date
+)
+
+console.log('FIREBASE PROJECT:', import.meta.env.VITE_FIREBASE_PROJECT_ID)
+console.log('FIREBASE UID:', user.uid)
+console.log('FIREBASE PATH:', `users/${user.uid}/healthEntries/${date}`)
+console.log('FIREBASE DATA:', data)
+
+await setDoc(ref, {
+  ...data,
+  __debugWrite: 'SAATHI_TEST',
+  __debugTime: new Date().toISOString(),
+})
+
+console.log('FIREBASE WRITE COMPLETE')
+
+  console.log('FIREBASE WRITE COMPLETE')
+
+  return {
+    ...normalisedEntry,
+    date,
+  }
+}
+
+export async function getInsights() { const cycle = await getCycleData(); return { insights: INSIGHT_TEMPLATES.map((item, id) => ({ id, ...item })), painTrend: [], cycleInfo: cycle } }
+
+
+export async function getRecommendations() {
+  const [cycle, health] = await Promise.all([
+    getCycleData(),
+    getHealthData(),
+  ])
+
+  const recommendations =
+    generatePersonalizedRecommendations(health || {})
+
+  return {
+    phaseKey: cycle.phaseKey,
+
+    categories: [
+      {
+        key: 'nutrition',
+        icon: '🥗',
+        title: 'Nutrition',
+        color: 'rose',
+        tip: recommendations.nutrition.summary,
+        insights: recommendations.nutrition.insights,
+        actions: recommendations.nutrition.actions,
+      },
+
+      {
+        key: 'exercise',
+        icon: '🏃',
+        title: 'Movement',
+        color: 'plum',
+        tip: recommendations.exercise.summary,
+        insights: recommendations.exercise.insights,
+        actions: recommendations.exercise.actions,
+      },
+
+      {
+        key: 'painManagement',
+        icon: '🌡️',
+        title: 'Pain Management',
+        color: 'rose',
+        tip: recommendations.painManagement.summary,
+        insights: recommendations.painManagement.insights,
+        actions: recommendations.painManagement.actions,
+      },
+
+      {
+        key: 'selfCare',
+        icon: '✨',
+        title: 'Self-Care',
+        color: 'teal',
+        tip: recommendations.selfCare.summary,
+        insights: recommendations.selfCare.insights,
+        actions: recommendations.selfCare.actions,
+      },
+
+      {
+        key: 'hygiene',
+        icon: '🩷',
+        title: 'Menstrual Hygiene',
+        color: 'teal',
+        tip: recommendations.hygiene.summary,
+        insights: recommendations.hygiene.insights,
+        actions: recommendations.hygiene.actions,
+      },
+
+      {
+        key: 'mentalWellness',
+        icon: '💗',
+        title: 'Mental Wellness',
+        color: 'rose',
+        tip: recommendations.mentalWellness.summary,
+        insights: recommendations.mentalWellness.insights,
+        actions: recommendations.mentalWellness.actions,
+      },
+    ],
+  }
+}
 export async function getSharingPermissions() { const data = await getUserData(); return data.sharingPermissions || SHARING_CATEGORIES.reduce((all, item) => ({ ...all, [item.key]: item.defaultOn ?? false }), {}) }
 export async function updateSharingPermissions(key, value) { const user = requireUser(); const permissions = await getSharingPermissions(); permissions[key] = value; await setDoc(doc(db, 'users', user.uid), { sharingPermissions: permissions, updatedAt: serverTimestamp() }, { merge: true }); await publishSharedProjection(user.uid); return permissions }
 

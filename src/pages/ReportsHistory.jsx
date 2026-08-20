@@ -1,12 +1,9 @@
-import React, { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import {
-  CalendarDays, Download, Printer, ChevronRight, Activity, HeartPulse,
+import Card from '../components/common/Card.jsx'
+import { CalendarDays, Download, Printer, ChevronRight, Activity, HeartPulse,
   Sparkles, Smile, Droplets, Dumbbell, Moon, Info, HelpCircle, ArrowRight,
   TrendingUp, FileText, CheckCircle2, ChevronDown
 } from 'lucide-react'
-
-import Card from '../components/common/Card.jsx'
 import Button from '../components/common/Button.jsx'
 import EmptyState from '../components/common/EmptyState.jsx'
 import { CycleLengthChart } from '../components/charts/TrendChart.jsx'
@@ -14,6 +11,7 @@ import DayDetailModal from '../components/reports/DayDetailModal.jsx'
 import { getReportsData } from '../data/api.js'
 import { useApp } from '../context/AppContext.jsx'
 import { MOOD_OPTIONS, PHASES } from '../data/mockData.js'
+import React, { useEffect, useMemo, useState } from 'react'
 
 import {
   getAvailableReportMonths,
@@ -83,7 +81,10 @@ export default function ReportsHistory() {
 
   // Cycle at a glance phase timeline
   const phaseDist = useMemo(() => {
-    return calculatePhaseDistribution(selectedMonth, data?.cycleInfo || {})
+    return calculatePhaseDistribution(
+      selectedMonth,
+      data?.cycleInfo || {}
+    )
   }, [selectedMonth, data])
 
   // Cycle length over time summary & chart data
@@ -169,7 +170,7 @@ export default function ReportsHistory() {
             Reports & History
           </h1>
           <p className="text-ink-500 text-sm mt-1">
-            Your cycle history, wellbeing patterns, and personal insights.
+            Your cycle, wellbeing patterns, and personal insights.
           </p>
         </div>
 
@@ -376,38 +377,50 @@ export default function ReportsHistory() {
 
             {/* Phase distribution day breakdown */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4 pt-3 border-t border-ink-100/70">
+
               <div className="p-2.5 rounded-xl bg-rose-50/50 border border-rose-100/80">
-                <p className="text-[11px] font-semibold text-rose-700">Menstrual</p>
+                <p className="text-[11px] font-semibold text-rose-700">
+                  Menstrual
+                </p>
                 <p className="text-base font-bold text-ink-900 mt-0.5">
-                  {phaseDist.phaseCounts.menstrual} {phaseDist.phaseCounts.menstrual === 1 ? 'day' : 'days'}
+                  {phaseDist.phaseCounts.menstrual}{' '}
+                  {phaseDist.phaseCounts.menstrual === 1 ? 'day' : 'days'}
                 </p>
               </div>
 
               <div className="p-2.5 rounded-xl bg-teal-50/50 border border-teal-100/80">
-                <p className="text-[11px] font-semibold text-teal-700">Follicular</p>
+                <p className="text-[11px] font-semibold text-teal-700">
+                  Follicular
+                </p>
                 <p className="text-base font-bold text-ink-900 mt-0.5">
-                  {phaseDist.phaseCounts.follicular} {phaseDist.phaseCounts.follicular === 1 ? 'day' : 'days'}
+                  {phaseDist.phaseCounts.follicular}{' '}
+                  {phaseDist.phaseCounts.follicular === 1 ? 'day' : 'days'}
                 </p>
               </div>
 
               <div className="p-2.5 rounded-xl bg-amber-50/50 border border-amber-100/80">
-                <p className="text-[11px] font-semibold text-amber-700">Ovulation</p>
+                <p className="text-[11px] font-semibold text-amber-700">
+                  Ovulation
+                </p>
                 <p className="text-base font-bold text-ink-900 mt-0.5">
-                  {phaseDist.phaseCounts.ovulation} {phaseDist.phaseCounts.ovulation === 1 ? 'day' : 'days'}
+                  {phaseDist.phaseCounts.ovulation}{' '}
+                  {phaseDist.phaseCounts.ovulation === 1 ? 'day' : 'days'}
                 </p>
               </div>
 
               <div className="p-2.5 rounded-xl bg-plum-50/50 border border-plum-100/80">
-                <p className="text-[11px] font-semibold text-plum-700">Luteal</p>
+                <p className="text-[11px] font-semibold text-plum-700">
+                  Luteal
+                </p>
                 <p className="text-base font-bold text-ink-900 mt-0.5">
-                  {phaseDist.phaseCounts.luteal} {phaseDist.phaseCounts.luteal === 1 ? 'day' : 'days'}
+                  {phaseDist.phaseCounts.luteal}{' '}
+                  {phaseDist.phaseCounts.luteal === 1 ? 'day' : 'days'}
                 </p>
               </div>
+
             </div>
 
-            <p className="text-xs text-ink-400 mt-3 italic">
-              * Phase mapping reflects cycle day calculations across month boundaries.
-            </p>
+         
           </div>
         ) : (
           <div className="p-5 text-center text-xs text-ink-500 bg-ink-50/40 rounded-xl">
@@ -787,9 +800,11 @@ export default function ReportsHistory() {
               </div>
             </div>
 
-            <p className="text-sm sm:text-base text-ink-800 leading-relaxed mt-3 font-medium">
-              {monthlySummaryText}
-            </p>
+            <div className="text-sm sm:text-base text-ink-800 leading-relaxed mt-3 font-medium space-y-2">
+              {monthlySummaryText.map((line, index) => (
+                <p key={index}>{line}</p>
+              ))}
+            </div>
 
             <div className="mt-5 pt-4 border-t border-ink-100/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <p className="text-[11px] text-ink-400 italic">
@@ -820,5 +835,6 @@ export default function ReportsHistory() {
       />
 
     </div>
+    
   )
 }

@@ -244,7 +244,19 @@ export function calculatePhaseDistribution(selectedMonthKey, cycleSetup = {}) {
     const diffMs = current - startDate
     const diffDays = Math.round(diffMs / 86400000)
     let cycleDay = ((diffDays % cycleLength) + cycleLength) % cycleLength + 1
-    const phaseKey = getPhaseForDay(cycleDay, cycleLength, periodLength)
+    const ovulationDay = cycleLength - 14
+
+    let phaseKey
+
+    if (cycleDay <= periodLength) {
+      phaseKey = 'menstrual'
+    } else if (cycleDay === ovulationDay) {
+      phaseKey = 'ovulation'
+    } else if (cycleDay < ovulationDay) {
+      phaseKey = 'follicular'
+    } else {
+      phaseKey = 'luteal'
+    }
 
     if (phaseCounts[phaseKey] !== undefined) {
       phaseCounts[phaseKey]++
@@ -360,53 +372,135 @@ export function calculateCycleLengthSummary(history = []) {
 /**
  * Categorizes and calculates frequency and percentage for all symptoms in the month.
  */
-export function calculateSymptomBreakdown(logsForMonth = [], activeFilter = 'All') {
+export function calculateSymptomBreakdown(
+  logsForMonth = [],
+  activeFilter = 'All'
+) {
   const totalLoggedDays = logsForMonth.length
+
   if (totalLoggedDays === 0) {
-    return { symptoms: [], totalLoggedDays: 0 }
+    return {
+      symptoms: [],
+      totalLoggedDays: 0,
+    }
   }
 
   const counts = {}
 
   logsForMonth.forEach((log) => {
     const seenInDay = new Set()
-    if (Array.isArray(log.symptoms)) {
-      log.symptoms.forEach((s) => {
-        if (s && s !== 'None' && !seenInDay.has(s)) {
-          seenInDay.add(s)
-          counts[s] = (counts[s] || 0) + 1
+
+    // -------------------------
+    // MOOD
+    // -------------------------
+    if (activeFilter === 'Mood' || activeFilter === 'All') {
+      const moods = Array.isArray(log.moods) ? log.moods : []
+
+      moods.forEach((mood) => {
+        if (!mood || mood === 'None') return
+
+        const key = `mood:${mood}`
+
+        if (!seenInDay.has(key)) {
+          seenInDay.add(key)
+          counts[mood] = (counts[mood] || 0) + 1
         }
       })
     }
-    if (log.otherSymptom && !seenInDay.has(log.otherSymptom)) {
-      seenInDay.add(log.otherSymptom)
-      counts[log.otherSymptom] = (counts[log.otherSymptom] || 0) + 1
+
+    // -------------------------
+    // PAIN
+    // -------------------------
+    if (activeFilter === 'Pain' || activeFilter === 'All') {
+      if (
+        log.pain !== null &&
+        log.pain !== undefined &&
+        log.pain !== '' &&
+        Number(log.pain) > 0
+      ) {
+        const key = 'pain'
+
+        if (!seenInDay.has(key)) {
+          seenInDay.add(key)
+          counts.Pain = (counts.Pain || 0) + 1
+        }
+      }
+
+      if (Array.isArray(log.painTypes)) {
+        log.painTypes.forEach((painType) => {
+          if (!painType || painType === 'None') return
+
+          const key = `painType:${painType}`
+
+          if (!seenInDay.has(key)) {
+            seenInDay.add(key)
+            counts[painType] = (counts[painType] || 0) + 1
+          }
+        })
+      }
+    }
+
+    // -------------------------
+    // PHYSICAL SYMPTOMS
+    // -------------------------
+    if (activeFilter === 'Physical' || activeFilter === 'All') {
+      if (Array.isArray(log.symptoms)) {
+        log.symptoms.forEach((symptom) => {
+          if (!symptom || symptom === 'None') return
+
+          const category =
+            SYMPTOM_CATEGORY_MAP[symptom] || 'physical'
+
+          if (category !== 'physical') return
+
+          if (!seenInDay.has(symptom)) {
+            seenInDay.add(symptom)
+            counts[symptom] = (counts[symptom] || 0) + 1
+          }
+        })
+      }
+
+      if (
+        log.otherSymptom &&
+        !seenInDay.has(`other:${log.otherSymptom}`)
+      ) {
+        seenInDay.add(`other:${log.otherSymptom}`)
+        counts[log.otherSymptom] =
+          (counts[log.otherSymptom] || 0) + 1
+      }
     }
   })
 
-  let list = Object.entries(counts).map(([name, count]) => {
-    const category = SYMPTOM_CATEGORY_MAP[name] || 'physical'
-    const percentage = Math.round((count / totalLoggedDays) * 100)
-    return {
+  const list = Object.entries(counts)
+    .map(([name, count]) => ({
       name,
       count,
-      percentage,
-      category,
-    }
-  })
-
-  if (activeFilter && activeFilter !== 'All') {
-    const filterKey = activeFilter.toLowerCase()
-    list = list.filter((item) => item.category === filterKey)
-  }
-
-  list.sort((a, b) => b.count - a.count || a.name.localeCompare(b.name))
+      percentage: Math.round(
+        (count / totalLoggedDays) * 100
+      ),
+      category:
+        activeFilter === 'Mood'
+          ? 'mood'
+          : activeFilter === 'Pain'
+            ? 'pain'
+            : 'physical',
+    }))
+    .sort(
+      (a, b) =>
+        b.count - a.count ||
+        a.name.localeCompare(b.name)
+    )
 
   return {
     symptoms: list,
     totalLoggedDays,
   }
 }
+
+/**
+ * Calculates historical baseline using only data BEFORE the selected month.
+ * Does not include the current month's values in its own baseline.
+ */
 
 const ENERGY_SCORE_MAP = {
   'very low': 1,
@@ -420,7 +514,12 @@ const ENERGY_SCORE_MAP = {
 
 function parseEnergyScore(energyStr) {
   if (!energyStr) return null
-  return ENERGY_SCORE_MAP[String(energyStr).trim().toLowerCase()] ?? null
+
+  return (
+    ENERGY_SCORE_MAP[
+      String(energyStr).trim().toLowerCase()
+    ] ?? null
+  )
 }
 
 function formatEnergyLabel(score) {
@@ -432,10 +531,6 @@ function formatEnergyLabel(score) {
   return 'Very High'
 }
 
-/**
- * Calculates historical baseline using only data BEFORE the selected month.
- * Does not include the current month's values in its own baseline.
- */
 export function calculateBaseline(allLogs = [], selectedMonthKey, cycleHistory = [], cycleSetup = {}) {
   if (!selectedMonthKey || !Array.isArray(allLogs)) {
     return { hasBaseline: false, reason: 'No historical data' }
@@ -890,5 +985,5 @@ export function generateMonthlySummary({
     sentences.push(`${topRelief.method} was noted as a helpful relief method on ${topRelief.count} ${topRelief.count === 1 ? 'day' : 'days'}.`)
   }
 
-  return sentences.join(' ')
+  return sentences
 }
