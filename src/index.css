@@ -44,3 +44,62 @@ h1, h2, h3, h4 {
 
 .scrollbar-none::-webkit-scrollbar { display: none; }
 .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* =========================================================
+   PRINT STYLESHEET
+   Optimized for Personal Health Report print / PDF export
+   ========================================================= */
+@media print {
+  body {
+    background: #ffffff !important;
+    background-image: none !important;
+    color: #302934 !important;
+    font-size: 11pt !important;
+  }
+
+  /* Hide navigation, sidebars, toast hosts, and action buttons */
+  aside,
+  nav,
+  header,
+  .no-print,
+  button,
+  .fixed,
+  footer {
+    display: none !important;
+  }
+
+  main {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
+  /* Keep cards looking clean with crisp borders and no awkward page cuts */
+  .bg-surface {
+    background-color: #ffffff !important;
+    border: 1px solid #E8DDEB !important;
+    box-shadow: none !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    margin-bottom: 1rem !important;
+  }
+
+  /* Ensure colors in charts and badges print accurately */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Print header banner */
+  .print-only-header {
+    display: block !important;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid #4A3654;
+  }
+}
+
+.print-only-header {
+  display: none;
+}
