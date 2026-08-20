@@ -57,11 +57,11 @@ export default function CycleRing({
 
         {/* Center text */}
         <div className="absolute text-center">
-          <p className="text-xs uppercase tracking-widest text-gray-400 font-medium">
+          <p className="text-xs uppercase  tracking-widest text-gray-300 font-bold">
             Cycle Day
           </p>
 
-          <p className="text-5xl font-semibold text-gray-900 mt-1">
+          <p className="text-5xl font-bold text-gray-900 mt-1">
             {cycleDay}
           </p>
 

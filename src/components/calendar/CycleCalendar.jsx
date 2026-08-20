@@ -18,10 +18,10 @@ const MONTHS = [
 ]
 
 const CATEGORY_META = {
-  prePeriod: { color: '#E8A94A', label: 'Pre-Period' },
-  period: { color: '#E85D75', label: 'Period Days' },
-  postPeriod: { color: '#443A61', label: 'Post-Period' },
-  ovulation: { color: '#3D8579', label: 'Peak Ovulation' },
+  period: { color: '#E85D75', label: 'Menstrual Phase' },
+  postPeriod: { color: '#443A61', label: 'Follicular Phase' },
+  ovulation: { color: '#3D8579', label: 'Ovulation' },
+  prePeriod: { color: '#E8A94A', label: 'Luteal Phase' },
 }
 
 function mod(n, m) {
@@ -30,6 +30,7 @@ function mod(n, m) {
 
 export function getCycleCategoryForDate(date, cycleSetup) {
   const { lastPeriodStart, cycleLength, periodLength } = cycleSetup
+
   const start = new Date(lastPeriodStart)
   start.setHours(0, 0, 0, 0)
 
@@ -38,15 +39,31 @@ export function getCycleCategoryForDate(date, cycleSetup) {
 
   const msPerDay = 1000 * 60 * 60 * 24
   const diffDays = Math.round((d - start) / msPerDay)
+
+  // Cycle day: 1 → cycleLength
   const dayInCycle = mod(diffDays, cycleLength) + 1
+
+  // Estimated ovulation is approximately 14 days before
+  // the next period.
   const ovulationDay = cycleLength - 14
 
-  if (dayInCycle <= periodLength) return 'period'
-  if (dayInCycle <= periodLength + 3) return 'postPeriod'
-  if (dayInCycle >= ovulationDay - 1 && dayInCycle <= ovulationDay + 1) return 'ovulation'
-  if (dayInCycle >= cycleLength - 1) return 'prePeriod'
+  // 1. Menstrual Phase
+  if (dayInCycle <= periodLength) {
+    return 'period'
+  }
 
-  return null
+  // 2. Ovulation
+  if (dayInCycle === ovulationDay) {
+    return 'ovulation'
+  }
+
+  // 3. Follicular Phase
+  if (dayInCycle < ovulationDay) {
+    return 'postPeriod'
+  }
+
+  // 4. Luteal Phase
+  return 'prePeriod'
 }
 
 export default function CycleCalendar({ cycleSetup, selectedDate, onSelectDay }) {

@@ -53,7 +53,7 @@ export default function UserDashboard() {
           <h1 className="font-display text-2xl sm:text-3xl font-semibold text-ink-900">
             {getGreeting()}, {user.name || 'there'} 👋
           </h1>
-          <p className="text-ink-500 text-sm mt-1">Here's how your cycle & wellbeing look today.</p>
+          <p className="text-ink-500 text-sm mt-1">Here’s your cycle & wellbeing overview for today.</p>
         </div>
       </div>
 
@@ -61,6 +61,7 @@ export default function UserDashboard() {
 
   {/* LEFT - CYCLE RING */}
   <Card className="flex flex-col items-center justify-center !p-7">
+    
     <CycleRing
       cycleDay={cycle.cycleDay}
       cycleLength={cycle.cycleLength}
@@ -83,7 +84,7 @@ export default function UserDashboard() {
         </div>
 
         <div>
-          <h2 className="font-display font-semibold text-ink-900 text-xl">
+          <h2 className="font-display font-bold text-ink-900 text-xl">
             Today's Check-In
           </h2>
 
@@ -96,7 +97,7 @@ export default function UserDashboard() {
 
       <Link
         to="/daily-health"
-        className="text-sm font-semibold text-rose-600 hover:text-rose-700 flex items-center gap-1"
+        className="text-sm font-bold text-rose-600 hover:text-rose-700 flex items-center gap-1"
       >
         Update
         <ArrowRight size={14} />
@@ -219,7 +220,7 @@ export default function UserDashboard() {
         />
 
         <p className="text-sm text-rose-700">
-          You haven't logged anything today yet.
+          You haven’t recorded anything today.
         </p>
 
         <Link
@@ -227,7 +228,7 @@ export default function UserDashboard() {
           className="ml-auto"
         >
           <Button size="sm" variant="subtle">
-            Log now
+            Log now →
           </Button>
         </Link>
 
@@ -245,7 +246,7 @@ export default function UserDashboard() {
     <div>
       <div className="flex items-center gap-2">
         <Sparkles size={18} className="text-rose-500" />
-        <h2 className="font-display font-semibold text-ink-900 text-lg">
+        <h2 className="font-display font-bold text-ink-900 text-lg">
           Today's Saathi Insight
         </h2>
       </div>

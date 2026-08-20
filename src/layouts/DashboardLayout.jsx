@@ -12,13 +12,13 @@ export const USER_NAV_ITEMS = [
   { to: '/dashboard', label: 'Dashboard', shortLabel: 'Home', icon: Home, end: true },
   { to: '/cycle-tracker', label: 'Cycle Tracker', shortLabel: 'Cycle', icon: CalendarDays },
   { to: '/daily-health', label: 'Daily Health', shortLabel: 'Health', icon: ClipboardPlus },
-  { to: '/insights', label: 'AI Insights', shortLabel: 'Insights', icon: Sparkles },
+  { to: '/insights', label: 'Saathi AI', shortLabel: 'Insights', icon: Sparkles },
   { to: '/wellness', label: 'Wellness', shortLabel: 'Wellness', icon: Leaf },
-  { to: '/education', label: 'Education', icon: BookOpen },
+  { to: '/education', label: 'Learn', icon: BookOpen },
   { to: '/products', label: 'Product Advisor', icon: ShoppingBag },
-  { to: '/reports', label: 'Reports & History', icon: FileText },
-  { to: '/connection', label: 'Supporter Connection', icon: Users },
-  { to: '/permissions', label: 'Sharing Permissions', icon: SlidersHorizontal },
+  { to: '/reports', label: 'History & Reports', icon: FileText },
+  { to: '/connection', label: 'Support Circle', icon: Users },
+  { to: '/permissions', label: 'Sharing & Privacy', icon: SlidersHorizontal },
 ]
 
 const BOTTOM_ITEMS = USER_NAV_ITEMS.slice(0, 5)
