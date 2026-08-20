@@ -16,21 +16,21 @@ export default function StatCard({
   }
 
   return (
-    <Card className="flex items-center gap-4">
+    <Card className="flex items-center gap-4 bg-white/95 rounded-2xl border border-ink-100/70 shadow-soft p-5">
       {Icon && (
         <div
-          className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${accents[accent]}`}
+          className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${accents[accent]}`}
         >
-          <Icon size={20} strokeWidth={2} />
+          <Icon size={22} strokeWidth={2} />
         </div>
       )}
 
       <div className="min-w-0">
-        <p className="text-xs font-bold text-ink-500 uppercase tracking-wide">
+        <p className="text-[11px] font-bold text-ink-500 uppercase tracking-wider">
           {label}
         </p>
 
-        <p className="text-xl font-display font-semibold text-ink-900 leading-tight truncate">
+        <p className="text-2xl font-display font-bold text-ink-900 leading-tight truncate mt-0.5">
           {value}
         </p>
 
