@@ -203,9 +203,9 @@ export default function CycleCalendar({
           </div>
 
           {/* Enclosed Calendar Table Card */}
-          <div className="border border-[#EBE1ED] rounded-2xl overflow-hidden bg-white/90 shadow-2xs">
+          <div className="rounded-2xl bg-white/90">
             {/* Weekday Header Row */}
-            <div className="grid grid-cols-7 border-b border-[#EBE1ED] bg-[#FAF7FC]">
+            <div className="grid grid-cols-7 bg-[#FAF7FC]">
               {WEEKDAYS.map((weekday, index) => (
                 <div
                   key={`${weekday}-${index}`}
@@ -217,9 +217,9 @@ export default function CycleCalendar({
             </div>
 
             {/* Calendar Grid Cells */}
-            <div className="divide-y divide-[#EBE1ED]/50">
+            <div>
               {weeks.map((row, rowIndex) => (
-                <div key={rowIndex} className="grid grid-cols-7 divide-x divide-[#EBE1ED]/50">
+                <div key={rowIndex} className="grid grid-cols-7">
                   {row.map((date, dayIndex) => {
                     if (!date) {
                       return (
@@ -239,14 +239,14 @@ export default function CycleCalendar({
                     return (
                       <div
                         key={dayIndex}
-                        className="min-h-[50px] sm:min-h-[56px] md:min-h-[60px] flex items-center justify-center p-1 sm:p-1.5"
+                        className="min-h-[64px] sm:min-h-[72px] md:min-h-[78px] flex items-center justify-center p-1"
                       >
                         <button
                           type="button"
                           onClick={() => handleSelectDate(date)}
                           aria-label={`Select ${date.toDateString()}`}
                           className={[
-                            'w-10 h-10 sm:w-11 sm:h-11',
+                            'w-8 h-8 sm:w-9 sm:h-9',
                             'rounded-full flex items-center justify-center relative',
                             'text-xs sm:text-sm font-bold transition-all duration-150',
                             'hover:scale-105 active:scale-95',

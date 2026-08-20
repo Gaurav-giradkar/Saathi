@@ -672,7 +672,7 @@ function getNutrition(input) {
     key: 'nutrition',
     summary:
       insights.length > 0
-        ? 'Your nutrition recommendation reflects your current food, hydration, energy, and symptom logs.'
+        ? 'Saathi’s nutrition guidance considers your recent meals, hydration, appetite, cravings, and energy levels.'
         : DEFAULTS.nutrition.summary,
 
     insights: unique(insights).slice(0, 6),
@@ -796,7 +796,7 @@ function getExercise(input) {
     key: 'exercise',
     summary:
       insights.length > 0
-        ? 'Your movement recommendation reflects your energy, pain, sleep, and activity logs.'
+        ? 'Saathi’s pain guidance considers your pain intensity, symptoms, affected areas, and the relief methods you track.'
         : DEFAULTS.exercise.summary,
 
     insights: unique(insights).slice(0, 6),
@@ -921,7 +921,7 @@ function getPainManagement(input) {
 
     summary:
       insights.length > 0
-        ? 'Your pain recommendation reflects your reported intensity, symptoms, location, and relief methods.'
+        ? 'Saathi’s pain guidance considers your pain intensity, symptoms, affected areas, and the relief methods you track.'
         : DEFAULTS.painManagement.summary,
 
     insights: unique(insights).slice(0, 8),
@@ -1044,7 +1044,7 @@ function getSelfCare(input) {
 
     summary:
       insights.length > 0
-        ? 'Your self-care recommendation reflects your sleep, energy, hydration, pain, stress, and personal notes.'
+        ? 'Saathi’s hygiene guidance considers your period status, bleeding, symptoms, and menstrual products.'
         : DEFAULTS.selfCare.summary,
 
     insights: unique(insights).slice(0, 8),
@@ -1155,7 +1155,7 @@ function getHygiene(input) {
 
     summary:
       insights.length > 0
-        ? 'Your hygiene recommendation reflects your period status, bleeding, symptoms, and products logged today.'
+        ? 'Saathi’s hygiene guidance considers your period status, bleeding, symptoms, and menstrual products.'
         : DEFAULTS.hygiene.summary,
 
     insights: unique(insights).slice(0, 8),
@@ -1286,7 +1286,7 @@ function getMentalWellness(input) {
 
     summary:
       insights.length > 0
-        ? 'Your mental wellness recommendation reflects your mood, stress, sleep, energy, concentration, and wellbeing logs.'
+        ? 'Saathi’s mental wellness guidance considers your mood, stress, sleep, energy, concentration, and overall wellbeing.'
         : DEFAULTS.mentalWellness.summary,
 
     insights: unique(insights).slice(0, 8),
