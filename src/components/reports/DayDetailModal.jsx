@@ -48,17 +48,17 @@ export default function DayDetailModal({ log, cycleInfo, open, onClose }) {
     <Modal open={open} onClose={onClose} title={formattedDate} size="lg">
       <div className="flex flex-col gap-4 text-sm">
 
-        {/* Stored Daily AI Summary */}
+        {/* Stored Daily AI Report */}
         {loadingSummary ? (
           <div className="p-3.5 rounded-xl bg-gradient-to-br from-rose-50/50 to-surface border border-rose-100 flex items-center gap-2.5 text-xs text-ink-500 animate-pulse">
             <Sparkles size={15} className="text-rose-500 animate-spin" />
-            <span>Daily AI summary is being prepared…</span>
+            <span>Loading daily report…</span>
           </div>
         ) : dailySummary && dailySummary.summary ? (
           <div className="p-4 rounded-xl bg-gradient-to-br from-surface to-rose-50/40 border border-rose-200/80 shadow-soft">
             <div className="flex items-center gap-2 text-rose-700 font-semibold text-xs uppercase tracking-wider mb-2">
               <Sparkles size={15} />
-              <span>Saathi Daily AI Summary</span>
+              <span>Saathi Daily Report</span>
             </div>
             <p className="text-sm text-ink-800 leading-relaxed font-medium">
               {dailySummary.summary}
