@@ -9,9 +9,9 @@ import BottomNav from '../components/common/BottomNav.jsx'
 
 export const SUPPORTER_NAV_ITEMS = [
   { to: '/supporter/dashboard', label: 'Dashboard', shortLabel: 'Home', icon: Home, end: true },
-  { to: '/supporter/insights', label: 'AI Insights', shortLabel: 'Insights', icon: Sparkles },
+  { to: '/supporter/insights', label: 'Saathi AI', shortLabel: 'Insights', icon: Sparkles },
   { to: '/supporter/wellness', label: 'Wellness', shortLabel: 'Wellness', icon: Leaf },
-  { to: '/supporter/education', label: 'Education', shortLabel: 'Education', icon: BookOpen },
+  { to: '/supporter/education', label: 'Learn', shortLabel: 'Education', icon: BookOpen },
   { to: '/supporter/products', label: 'Product Advisor', shortLabel: 'Products', icon: ShoppingBag },
   { to: '/supporter/connection', label: 'Connect', shortLabel: 'Connect', icon: Users },
 ]

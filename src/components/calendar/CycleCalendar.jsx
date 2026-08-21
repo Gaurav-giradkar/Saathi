@@ -82,32 +82,6 @@ export function getCycleDayForDate(date, cycleSetup = {}) {
   return mod(diffDays, Number(cycleLength)) + 1
 }
 
-/* Subtle corner vine decoration on the bottom-left of the main card */
-function BotanicalCornerVine({ className = '' }) {
-  return (
-    <svg
-      viewBox="0 0 140 100"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      className={className}
-      aria-hidden="true"
-    >
-      <path
-        d="M8 92 Q45 75 80 40 Q105 20 128 6"
-        stroke="currentColor"
-        strokeWidth="1.75"
-        strokeLinecap="round"
-        opacity="0.4"
-      />
-      <path d="M40 76 Q46 62 38 52" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" opacity="0.35" />
-      <circle cx="36" cy="50" r="3.5" fill="currentColor" fillOpacity="0.3" />
-      <path d="M68 52 Q82 48 90 38" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" opacity="0.35" />
-      <circle cx="92" cy="36" r="3.5" fill="currentColor" fillOpacity="0.3" />
-      <path d="M102 30 Q114 34 122 28" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" opacity="0.35" />
-      <circle cx="124" cy="26" r="3.5" fill="currentColor" fillOpacity="0.3" />
-    </svg>
-  )
-}
 
 export default function CycleCalendar({
   cycleSetup,
@@ -185,9 +159,9 @@ export default function CycleCalendar({
             </button>
 
             <h3 className="font-display font-bold text-ink-900 text-xl sm:text-2xl tracking-tight text-center flex items-center justify-center gap-2.5">
-              <span className="text-[#8064A2]/50 text-sm hidden sm:inline select-none">➔</span>
+              <span className="text-[#8064A2]/50 text-sm hidden sm:inline select-none"></span>
               <span>{MONTHS[viewDate.getMonth()]} {viewDate.getFullYear()}</span>
-              <span className="text-[#8064A2]/50 text-sm hidden sm:inline select-none">✦</span>
+              <span className="text-[#8064A2]/50 text-sm hidden sm:inline select-none"></span>
             </h3>
 
             <button
@@ -304,8 +278,7 @@ export default function CycleCalendar({
 
       </div>
 
-      {/* Decorative corner botanical vine on the bottom-left of main card */}
-      <BotanicalCornerVine className="absolute -bottom-2 -left-2 w-32 h-20 text-[#8064A2]/30 pointer-events-none select-none" />
+     
     </div>
   )
 }

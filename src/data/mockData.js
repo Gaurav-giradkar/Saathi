@@ -377,6 +377,28 @@ export const EDUCATION_TOPICS = [
       'A personal pattern is an observation from your history, not a diagnosis or a guarantee that the same thing will happen every cycle.',
     ],
   },
+
+  {
+    id: 'self-care-wellbeing',
+    title: 'Self-Care & Wellbeing',
+    icon: 'Heart',
+    summary:
+      'Learn how sleep, rest, stress, hydration, movement, and everyday routines can influence how you feel throughout your cycle.',
+
+    content: [
+      'Sleep & Rest: Consistent sleep and adequate rest can support energy, concentration, mood, and overall wellbeing. Sleep needs can vary between individuals.',
+
+      'Stress & Wellbeing: Stress can affect mood, energy, sleep, and how physical symptoms are experienced. Supporting manageable routines can be helpful.',
+
+      'Hydration & Nutrition: Regular fluids and balanced meals support normal body function. Individual needs and preferences vary.',
+
+      'Movement: Gentle or enjoyable movement can support general wellbeing for some people. Activity should match the person’s comfort, energy, and preferences.',
+
+      'Listen to the Body: There is no single routine that works for everyone. Encourage people to notice how they feel and adjust their routines accordingly.',
+
+      'Avoid Assumptions: Sleep, mood, energy, or physical changes should not automatically be attributed to the menstrual cycle. Many factors can influence wellbeing.',
+    ],
+  }
 ]
 
 
