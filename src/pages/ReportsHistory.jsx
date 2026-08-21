@@ -181,6 +181,15 @@ export default function ReportsHistory() {
     []
   )
 
+  const formattedTodayDate = useMemo(() => {
+    return new Date().toLocaleDateString('en-IN', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    })
+  }, [])
+
   const todayLog = useMemo(
     () => (data?.logs || []).find((log) => log.date === todayDate),
     [data, todayDate]
@@ -804,135 +813,136 @@ export default function ReportsHistory() {
       </div>
 
       {/* ==================================================
-    9. SAATHI'S DAILY SUMMARY
-    ================================================== */}
-    <Card className="!p-6 sm:!p-7 bg-gradient-to-br from-surface to-teal-50/20 border-teal-200/70 shadow-soft">
-      <div className="flex items-start gap-3.5">
-        <div className="w-10 h-10 rounded-2xl bg-teal-500 text-white flex items-center justify-center shrink-0 shadow-soft">
-          <Sparkles size={20} />
-        </div>
-
-        <div className="flex-1">
-          <div className="mb-3">
-            <h2 className="font-display font-bold text-ink-900 text-lg sm:text-xl">
-              Saathi's daily summary
-            </h2>
-
-            <p className="text-ink-500 text-xs sm:text-sm mt-0.5">
-              A personalized summary based on today's Health Tracker.
-            </p>
+          SAATHI'S DAILY REPORT
+          ================================================== */}
+      <Card className="!p-6 sm:!p-7 bg-gradient-to-br from-surface to-teal-50/20 border-teal-200/70 shadow-soft">
+        <div className="flex items-start gap-3.5">
+          <div className="w-10 h-10 rounded-2xl bg-teal-500 text-white flex items-center justify-center shrink-0 shadow-soft">
+            <Sparkles size={20} />
           </div>
 
-          {loadingDailySummary ? (
-            <div className="py-7 flex flex-col items-center justify-center gap-2 text-center">
-              <Sparkles size={22} className="text-teal-500 animate-pulse" />
-
-              <p className="text-sm font-medium text-ink-700">
-                Preparing today's summary…
-              </p>
-
-              <p className="text-xs text-ink-400">
-                Saathi is analyzing today's check-in.
-              </p>
-            </div>
-          ) : dailyAiSummary ? (
-            <div className="space-y-4">
+          <div className="flex-1">
+            <div className="flex items-center justify-between flex-wrap gap-2 mb-3">
               <div>
-                <p className="text-xs font-bold uppercase tracking-wide text-ink-500 mb-1.5">
-                  Today's Summary
-                </p>
-
-                <p className="text-sm sm:text-base text-ink-800 leading-relaxed font-medium">
-                  {dailyAiSummary.summary}
+                <h2 className="font-display font-bold text-ink-900 text-lg sm:text-xl">
+                  Saathi's daily report
+                </h2>
+                <p className="text-ink-500 text-xs sm:text-sm mt-0.5">
+                  {formattedTodayDate} • A personalized summary based on today's Health Tracker.
                 </p>
               </div>
 
-              {Array.isArray(dailyAiSummary.keyPoints) &&
-                dailyAiSummary.keyPoints.length > 0 && (
-                  <div>
-                    <p className="text-xs font-bold uppercase tracking-wide text-ink-500 mb-1.5">
-                      Today's Highlights
+              {dailyAiSummary && (
+                <span className="text-[11px] font-semibold text-teal-700 bg-teal-50 border border-teal-200/70 px-2.5 py-1 rounded-full">
+                  Today's Report
+                </span>
+              )}
+            </div>
+
+            {loadingDailySummary ? (
+              <div className="py-7 flex flex-col items-center justify-center gap-2 text-center">
+                <Sparkles size={22} className="text-teal-500 animate-pulse" />
+                <p className="text-sm font-medium text-ink-700">
+                  Preparing today's report...
+                </p>
+                <p className="text-xs text-ink-400">
+                  Saathi is analyzing today's check-in.
+                </p>
+              </div>
+            ) : dailyAiSummary ? (
+              <div className="space-y-4">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wide text-ink-500 mb-1.5">
+                    Today's Summary
+                  </p>
+                  <p className="text-sm sm:text-base text-ink-800 leading-relaxed font-medium">
+                    {dailyAiSummary.summary}
+                  </p>
+                </div>
+
+                {Array.isArray(dailyAiSummary.keyPoints) &&
+                  dailyAiSummary.keyPoints.length > 0 && (
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-wide text-ink-500 mb-1.5">
+                        Today's Highlights
+                      </p>
+                      <ul className="space-y-1 text-xs sm:text-sm text-ink-700 list-disc list-inside">
+                        {dailyAiSummary.keyPoints.map((point, index) => (
+                          <li key={index}>{point}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+                  <div className="p-3 rounded-xl bg-surface border border-ink-100">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-ink-400">
+                      Pain
                     </p>
-
-                    <ul className="space-y-1 text-xs sm:text-sm text-ink-700 list-disc list-inside">
-                      {dailyAiSummary.keyPoints.map((point, index) => (
-                        <li key={index}>{point}</li>
-                      ))}
-                    </ul>
+                    <p className="text-sm font-bold text-ink-900 mt-1">
+                      {todayLog?.pain != null && todayLog?.pain !== '' ? `${todayLog.pain}/10` : '—'}
+                    </p>
                   </div>
-                )}
 
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
-                <div className="p-3 rounded-xl bg-surface border border-ink-100">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-ink-400">
-                    Pain
-                  </p>
-                  <p className="text-sm font-bold text-ink-900 mt-1">
-                    {todayLog?.pain != null ? `${todayLog.pain}/10` : '—'}
-                  </p>
-                </div>
+                  <div className="p-3 rounded-xl bg-surface border border-ink-100">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-ink-400">
+                      Mood
+                    </p>
+                    <p className="text-sm font-bold text-ink-900 mt-1 truncate">
+                      {(() => {
+                        const moodMeta = MOOD_OPTIONS.find(
+                          (m) =>
+                            m.key ===
+                            (todayLog?.mood || todayLog?.moods?.[0])?.toLowerCase()
+                        )
+                        return moodMeta
+                          ? `${moodMeta.emoji} ${moodMeta.label}`
+                          : todayLog?.moods?.[0] || '—'
+                      })()}
+                    </p>
+                  </div>
 
-                <div className="p-3 rounded-xl bg-surface border border-ink-100">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-ink-400">
-                    Mood
-                  </p>
-                  <p className="text-sm font-bold text-ink-900 mt-1 truncate">
-                    {(() => {
-                      const moodMeta = MOOD_OPTIONS.find(
-                        (m) =>
-                          m.key ===
-                          (todayLog?.mood || todayLog?.moods?.[0])?.toLowerCase()
-                      )
+                  <div className="p-3 rounded-xl bg-surface border border-ink-100">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-ink-400">
+                      Sleep
+                    </p>
+                    <p className="text-sm font-bold text-ink-900 mt-1">
+                      {todayLog?.sleep != null && todayLog?.sleep !== '' ? `${todayLog.sleep} hrs` : '—'}
+                    </p>
+                  </div>
 
-                      return moodMeta
-                        ? `${moodMeta.emoji} ${moodMeta.label}`
-                        : todayLog?.moods?.[0] || '—'
-                    })()}
-                  </p>
-                </div>
-
-                <div className="p-3 rounded-xl bg-surface border border-ink-100">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-ink-400">
-                    Sleep
-                  </p>
-                  <p className="text-sm font-bold text-ink-900 mt-1">
-                    {todayLog?.sleep ? `${todayLog.sleep} hrs` : '—'}
-                  </p>
-                </div>
-
-                <div className="p-3 rounded-xl bg-surface border border-ink-100">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-ink-400">
-                    Symptoms
-                  </p>
-                  <p className="text-sm font-bold text-ink-900 mt-1">
-                    {todayLog
-                      ? (todayLog.symptoms?.length || 0) +
-                        (todayLog.otherSymptom ? 1 : 0)
-                      : '—'}
-                  </p>
+                  <div className="p-3 rounded-xl bg-surface border border-ink-100">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-ink-400">
+                      Symptoms
+                    </p>
+                    <p className="text-sm font-bold text-ink-900 mt-1">
+                      {todayLog
+                        ? (todayLog.symptoms?.length || 0) +
+                          (todayLog.otherSymptom ? 1 : 0)
+                        : '—'}
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
-          ) : (
-            <div className="py-6 text-center bg-ink-50/40 rounded-xl">
-              <p className="text-sm text-ink-600 font-medium">
-                Today's AI summary is not available yet.
-              </p>
+            ) : (
+              <div className="py-6 text-center bg-ink-50/40 rounded-xl">
+                <p className="text-sm text-ink-600 font-medium">
+                  Today's AI report is not available yet.
+                </p>
+                <p className="text-xs text-ink-400 mt-1">
+                  Complete and save today's Health Tracker to generate it.
+                </p>
+              </div>
+            )}
 
-              <p className="text-xs text-ink-400 mt-1">
-                Complete and save today's Health Tracker to generate it.
+            <div className="mt-5 pt-4 border-t border-ink-100/70">
+              <p className="text-[11px] text-ink-400 italic">
+                * This summary is generated from today's logged observations.
               </p>
             </div>
-          )}
-
-          <div className="mt-5 pt-4 border-t border-ink-100/70">
-            <p className="text-[11px] text-ink-400 italic">
-              * This summary is generated from today's logged observations.
-            </p>
           </div>
         </div>
-      </div>
-    </Card>
+      </Card>
 
       {/* ==================================================
           9. SYMPTOM HISTORY (Clickable Daily Log Rows)

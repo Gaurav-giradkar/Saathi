@@ -651,6 +651,7 @@ Generate today's daily summary based strictly on logged entries.
             : Array.isArray(parsed.highlights)
             ? parsed.highlights
             : [],
+          source: 'gemini',
         }
       }
     }
@@ -663,6 +664,7 @@ Generate today's daily summary based strictly on logged entries.
       health.pain != null ? `Pain level recorded: ${health.pain}/10` : 'Wellness check-in completed',
       health.energy ? `Energy level noted: ${health.energy}` : 'Rest and hydration prioritized',
     ],
+    source: 'fallback',
   }
 }
 

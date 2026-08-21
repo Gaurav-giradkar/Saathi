@@ -954,26 +954,39 @@ export async function saveHealthLog(
 
 /**
  * Deterministic hash to detect if source health entry changed
+ * Computed strictly from the exact normalized health entry saved to Firestore
  */
 function computeHealthEntryHash(entry = {}) {
   const keys = [
     'periodStatus',
     'bleeding',
     'pain',
+    'painLocations',
+    'painTypes',
+    'otherPainLocation',
+    'otherPainType',
     'energy',
     'mood',
     'moods',
+    'stress',
     'sleep',
     'sleepQuality',
     'waterLiters',
     'symptoms',
+    'otherSymptom',
     'meals',
+    'otherMeal',
     'appetite',
     'cravings',
-    'painLocations',
-    'painTypes',
+    'otherCraving',
+    'productOptions',
+    'otherProduct',
     'relief',
+    'otherRelief',
+    'exerciseActivities',
     'exerciseMinutes',
+    'exerciseIntensity',
+    'otherExercise',
     'notes',
   ]
   const values = keys.map((k) => JSON.stringify(entry[k] ?? ''))
@@ -1045,6 +1058,7 @@ async function triggerDailySummaryGeneration(date, healthEntry) {
         : Array.isArray(dataObj.highlights)
         ? dataObj.highlights
         : [],
+      source: dataObj.source === 'gemini' ? 'gemini' : 'fallback',
       sourceHash: currentHash,
       sourceUpdatedAt: new Date().toISOString(),
       generatedAt: new Date().toISOString(),
@@ -1052,6 +1066,7 @@ async function triggerDailySummaryGeneration(date, healthEntry) {
 
     console.log('[AI Daily Summary Generated Shape]:', {
       date,
+      source: docPayload.source,
       hasSummary: Boolean(docPayload.summary),
       keyPointsCount: docPayload.keyPoints.length,
     })
@@ -1073,6 +1088,40 @@ async function triggerDailySummaryGeneration(date, healthEntry) {
     }
   } catch (error) {
     console.warn('[AI Daily Summary Async Error]:', error?.message)
+    // Save safe fallback daily report so reports page always has access to today's summary
+    try {
+      const uid = auth?.currentUser?.uid || 'local_user'
+      const currentHash = computeHealthEntryHash(healthEntry)
+      const storageKey = `saathi_ai_daily_${uid}_${date}`
+      const fallbackPayload = {
+        date,
+        summary: `Daily check-in recorded for ${date}. Keeping consistent logs helps identify trends in your comfort, energy, and cycle patterns over time.`,
+        keyPoints: [
+          healthEntry?.periodStatus && healthEntry.periodStatus !== 'none'
+            ? `Period status: ${healthEntry.periodStatus}`
+            : 'Check-in logged for today',
+          healthEntry?.pain != null && healthEntry.pain !== ''
+            ? `Pain level recorded: ${healthEntry.pain}/10`
+            : 'Wellness check-in completed',
+          healthEntry?.energy ? `Energy level noted: ${healthEntry.energy}` : 'Rest and hydration prioritized',
+        ],
+        source: 'fallback',
+        sourceHash: currentHash,
+        sourceUpdatedAt: new Date().toISOString(),
+        generatedAt: new Date().toISOString(),
+      }
+
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(fallbackPayload))
+      } catch (e) {}
+
+      if (db && auth?.currentUser) {
+        const reportRef = doc(db, 'users', uid, 'aiReports', `daily-${date}`)
+        await setDoc(reportRef, fallbackPayload, { merge: true })
+      }
+    } catch (fallbackErr) {
+      console.warn('[AI Daily Summary Fallback Write Warning]:', fallbackErr?.message)
+    }
   }
 }
 

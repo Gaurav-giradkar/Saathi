@@ -249,14 +249,21 @@ export function createAiMiddleware(env = process.env) {
         // Minimized payload
         const minimalHealth = {
           periodStatus: health.periodStatus,
+          bleeding: health.bleeding,
           pain: health.pain,
+          painLocations: Array.isArray(health.painLocations) ? health.painLocations : [],
+          painTypes: Array.isArray(health.painTypes) ? health.painTypes : [],
           mood: health.mood || health.moods,
           energy: health.energy,
           sleep: health.sleep,
+          sleepQuality: health.sleepQuality,
           waterLiters: health.waterLiters,
           symptoms: Array.isArray(health.symptoms) ? health.symptoms : [],
           meals: Array.isArray(health.meals) ? health.meals : [],
+          cravings: Array.isArray(health.cravings) ? health.cravings : [],
+          relief: Array.isArray(health.relief) ? health.relief : [],
           exerciseMinutes: health.exerciseMinutes,
+          notes: health.notes,
         }
 
         const result = await generateDailySummary({
