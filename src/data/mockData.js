@@ -164,6 +164,7 @@ export const SHARING_CATEGORIES = [
     label: 'Cycle phase',
     desc: 'The currently estimated phase of the menstrual cycle.',
     locked: true,
+    defaultOn: false,
   },
 
   {
@@ -628,15 +629,23 @@ export const SUPPORT_SUGGESTIONS = {
     ],
   },
 
-  noDataShared: {
-    feeling: 'No additional health information has been shared.',
+  periodNotActive: {
+    feeling: 'Their period is not currently active.',
     help: [
-      'Respect their privacy.',
-      'Ask how they are doing rather than trying to infer it from their cycle phase.',
+      'Continue your usual support and check in with them regularly.',
+      'Ask how they are feeling instead of trying to guess.',
+      'Offer practical help with food, chores, or errands when appropriate.',
+      'Respect their preferred level of space and privacy.',
+      'Listen first if they want to talk about how their day is going.',
+      'Support healthy routines such as rest, hydration, and regular meals.',
     ],
     avoid: [
-      'Guessing their mood, energy, pain, or personality from their menstrual phase.',
-      'Attempting to access information that they have not shared.',
+      'Assuming they are experiencing pain or menstrual symptoms.',
+      'Assuming you know how they feel based on their cycle.',
+      'Pressuring them to talk when they want privacy.',
+      'Turning normal mood or energy changes into assumptions about their health.',
+      'Offering medical or menstrual advice when they have not asked for it.',
+      'Sharing or discussing their private health information with others.',
     ],
   },
 };

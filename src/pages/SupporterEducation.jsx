@@ -158,6 +158,25 @@ export const SUPPORTER_EDUCATION_TOPICS = [
       'Saathi helps make this easier by allowing the user to choose what information they share with their supporter.',
     ],
   },
+    {
+      id: 'mental-emotional-support',
+      title: 'Mental & Emotional Wellbeing',
+      icon: 'Brain',
+      summary:
+        'Understand mood, stress, energy, and emotional wellbeing while offering supportive, non-judgmental care.',
+
+      content: [
+        'Mood Can Vary: Mood can change for many reasons, including stress, sleep, relationships, workload, and hormonal changes. Do not automatically attribute emotional changes to menstruation.',
+
+        'Listen Without Dismissing: If someone wants to talk, listen without minimizing their feelings or immediately trying to solve the problem.',
+
+        'Ask What They Need: A simple question such as "Would you like me to listen, help, or give you some space?" lets them decide what kind of support feels useful.',
+
+        'Respect Emotional Boundaries: Do not pressure someone to explain their feelings or continue a conversation when they would prefer some privacy.',
+
+        'Watch for Persistent Concerns: Significant or persistent changes in mood, anxiety, or wellbeing should not simply be attributed to the menstrual cycle. Encourage appropriate professional support when needed.',
+      ],
+    },
 ]
 
 export default function SupporterEducation() {

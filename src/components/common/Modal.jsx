@@ -34,17 +34,17 @@ export default function Modal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/20 backdrop-blur-sm animate-fadeIn"
+        className="absolute inset-0 bg-white/75 backdrop-blur-2xl animate-fadeIn"
         onClick={onClose}
       />
 
       {/* Modal */}
       <div
         className={`
-          relative mx-auto mt-4 sm:mt-8 w-full ${widths[size]}
+          relative mx-auto w-full ${widths[size]}
           max-h-[88vh]
           bg-surface
           rounded-2xl

@@ -1,200 +1,335 @@
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
+
 import {
-  HeartHandshake, HandHeart, MessageCircleHeart, ShieldAlert,
-  Sparkles, Coffee, Clock, Heart, AlertCircle, RefreshCw,
+  HeartHandshake,
+  MessageCircleHeart,
+  Sparkles,
+  ShieldCheck,
+  Coffee,
+  Heart,
+  Moon,
+  Brain,
+  Stethoscope,
+  Clock,
 } from 'lucide-react'
+
 import Card from '../components/common/Card.jsx'
-import RecommendationCard from '../components/common/RecommendationCard.jsx'
-import PhaseBadge from '../components/common/PhaseBadge.jsx'
-import Button from '../components/common/Button.jsx'
-import { getSupporterData } from '../data/api.js'
-import { PHASES } from '../data/mockData.js'
+import Modal from '../components/common/Modal.jsx'
 
 const SUPPORTER_WELLNESS_CATEGORIES = [
   {
     key: 'practical',
     title: 'Practical Support',
-    icon: 'HeartHandshake',
-    color: 'teal',
-    tip: 'Offer help with meals, chores, errands, or other everyday tasks when it would be useful. Practical support can make difficult days easier.',
+    icon: HeartHandshake,
+    iconBg: 'bg-teal-50',
+    iconColor: 'text-teal-600',
+    tip:
+      'Help with everyday responsibilities when someone needs a lighter day.',
+
+    content: [
+      'Offer help with meals, chores, errands, transportation, or other everyday responsibilities when it would genuinely be useful.',
+      'Ask what would make their day easier instead of deciding what they need for them.',
+      'Offer specific choices such as, “Would you like me to make food, handle the dishes, or give you some quiet time?”',
+      'Do not assume someone needs help simply because they seem tired, quiet, or uncomfortable.',
+      'Respect a “no” without taking it personally.',
+      'Good practical support should reduce pressure, not create another responsibility for the person.',
+    ],
   },
 
   {
     key: 'communication',
     title: 'Empathetic Communication',
-    icon: 'MessageCircleHeart',
-    color: 'plum',
-    tip: 'Ask open questions such as "What would feel most helpful right now?" Listen without judgment and avoid unsolicited solutions.',
+    icon: MessageCircleHeart,
+    iconBg: 'bg-plum-50',
+    iconColor: 'text-plum-600',
+    tip:
+      'Listen first, ask thoughtful questions, and avoid turning every conversation into a solution.',
+
+    content: [
+      'Ask open questions such as, “How are you feeling?” or “What would help right now?”',
+      'Listen without immediately trying to fix the situation.',
+      'Validate their experience without exaggerating it or dismissing it.',
+      'Ask before giving advice.',
+      'Avoid phrases such as “It is not that bad,” “You are overthinking,” or “Just calm down.”',
+      'Give them enough time to explain what they are experiencing.',
+      'Sometimes being heard is more useful than being given a solution.',
+    ],
   },
 
   {
     key: 'comfort',
     title: 'Comfort & Relief',
-    icon: 'Sparkles',
-    color: 'rose',
-    tip: 'Offer things the person finds comforting, such as a heating pad, warm drink, quiet environment, or help with everyday tasks.',
+    icon: Sparkles,
+    iconBg: 'bg-rose-50',
+    iconColor: 'text-rose-500',
+    tip:
+      'Learn practical ways to make someone more physically comfortable.',
+
+    content: [
+      'Offer things they already know they find comforting.',
+      'Depending on the person, comfort may include warmth, rest, a quiet environment, a drink, food, or help with everyday tasks.',
+      'Ask what usually helps rather than assuming.',
+      'If they want a quieter environment, reduce unnecessary noise or interruptions.',
+      'Do not pressure someone to try a particular remedy simply because it helped someone else.',
+      'Comfort measures are supportive, but they are not a substitute for professional care when symptoms are serious or persistent.',
+    ],
   },
 
   {
     key: 'boundaries',
     title: 'Respecting Boundaries',
-    icon: 'ShieldAlert',
-    color: 'amber',
-    tip: 'Support needs can change from day to day. If they want quiet, privacy, or space, respect their preference without taking it personally.',
+    icon: ShieldCheck,
+    iconBg: 'bg-amber-50',
+    iconColor: 'text-amber-600',
+    tip:
+      'Good support includes knowing when to stay close and when to give someone space.',
+
+    content: [
+      'Ask whether they want company, conversation, practical help, or some space.',
+      'Respect requests for privacy without taking them personally.',
+      'Do not repeatedly ask for updates when they do not want to talk.',
+      'Do not assume that quietness means they are angry or upset with you.',
+      'Never access, discuss, or share health information they have chosen not to share with you.',
+      'Remember that support preferences can change from day to day.',
+      'Giving someone space can be just as supportive as staying close.',
+    ],
   },
 
   {
     key: 'nutrition',
     title: 'Nourishment & Hydration',
-    icon: 'Coffee',
-    color: 'teal',
-    tip: 'Offer water, a meal, or a snack if they would appreciate it. Let them choose what they prefer rather than assuming what they need.',
+    icon: Coffee,
+    iconBg: 'bg-teal-50',
+    iconColor: 'text-teal-600',
+    tip:
+      'Support regular eating and drinking without policing what someone consumes.',
+
+    content: [
+      'Offer water, a meal, or a snack when appropriate.',
+      'Ask what they feel like eating rather than deciding for them.',
+      'Make food easier to access when someone is tired, busy, or not feeling well.',
+      'Respect appetite changes, food preferences, allergies, and dietary choices.',
+      'Avoid comments that create guilt or pressure around eating.',
+      'Do not assume that one particular food is medically necessary for someone.',
+      'Support comfortable routines rather than trying to control what they eat or drink.',
+    ],
   },
 
   {
     key: 'patience',
     title: 'Patience & Reassurance',
-    icon: 'Heart',
-    color: 'rose',
-    tip: 'Be a calm and dependable presence. Reassurance, patience, and consistency can help someone feel supported without feeling pressured.',
+    icon: Heart,
+    iconBg: 'bg-rose-50',
+    iconColor: 'text-rose-500',
+    tip:
+      'Be calm, reliable, and present without creating additional pressure.',
+
+    content: [
+      'Give them time when they need it.',
+      'Reassure without dismissing what they are experiencing.',
+      'Keep your tone calm during stressful moments.',
+      'Do not demand immediate explanations or responses.',
+      'Follow through when you say you will help.',
+      'Consistency builds trust more effectively than dramatic gestures.',
+      'Let them know support is available without making them feel dependent on you.',
+    ],
+  },
+
+  {
+    key: 'rest',
+    title: 'Supporting Rest & Recovery',
+    icon: Moon,
+    iconBg: 'bg-plum-50',
+    iconColor: 'text-plum-600',
+    tip:
+      'Help create conditions where someone can rest without feeling guilty or pressured.',
+
+    content: [
+      'Encourage rest when they say they need it.',
+      'Reduce unnecessary noise, interruptions, or tasks when appropriate.',
+      'Offer to handle a small responsibility while they rest.',
+      'Do not equate rest with laziness or lack of motivation.',
+      'Avoid pressuring someone to push through discomfort or exhaustion.',
+      'Ask what would make resting easier instead of deciding for them.',
+      'Respect their need for sleep, quiet time, or reduced activity.',
+    ],
+  },
+
+  {
+    key: 'overwhelmed',
+    title: 'When Someone Feels Overwhelmed',
+    icon: Brain,
+    iconBg: 'bg-amber-50',
+    iconColor: 'text-amber-600',
+    tip:
+      'Respond calmly when stress, emotions, responsibilities, or discomfort become too much.',
+
+    content: [
+      'Stay calm and avoid adding more pressure.',
+      'Ask one simple question at a time rather than overwhelming them with solutions.',
+      'Help break practical problems into smaller tasks when they want that help.',
+      'Offer your presence without demanding conversation.',
+      'Avoid saying “calm down” or comparing their situation with someone else’s.',
+      'Ask whether they want listening, practical help, or some space.',
+      'Sometimes the best first step is simply making the situation feel less demanding.',
+    ],
+  },
+
+  {
+    key: 'professional-help',
+    title: 'When to Encourage Professional Help',
+    icon: Stethoscope,
+    iconBg: 'bg-rose-50',
+    iconColor: 'text-rose-500',
+    tip:
+      'Recognize when supportive care is no longer enough.',
+
+    content: [
+      'Take severe, worsening, persistent, or disruptive symptoms seriously.',
+      'Encourage appropriate professional support when someone is struggling significantly.',
+      'Do not diagnose the person yourself.',
+      'Do not dismiss concerning symptoms as “just hormones” or “just their period.”',
+      'If they want help seeking care, offer practical support such as helping them arrange an appointment or get there.',
+      'Respect their decisions about how and when to seek professional help.',
+      'Being supportive does not mean being responsible for diagnosing or treating another person.',
+    ],
   },
 ]
 
-const PHASE_SUPPORT_GUIDES = {
-  menstrual: {
-    focus: 'Rest & Comfort',
-    guidance: 'Physical energy is often lowest during menstruation. Offer heating pads, hot drinks, handle heavy chores, and keep social commitments flexible.',
-  },
-  follicular: {
-    focus: 'Encouragement & Shared Activities',
-    guidance: 'Energy and optimism typically build up during this phase. Great time for planning activities, outings, and trying new things together.',
-  },
-  ovulation: {
-    focus: 'Active Engagement',
-    guidance: 'Often marked by higher energy and social engagement. Stay communicative, supportive, and engaged in joint projects.',
-  },
-  luteal: {
-    focus: 'Calm & Understanding',
-    guidance: 'Progesterone rises and falls, sometimes bringing fatigue, mood shifts, or cravings. Offer extra patience, lower daily stressors, and avoid unnecessary conflict.',
-  },
-}
-
 export default function SupporterWellness() {
-  const [data, setData] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [fetchError, setFetchError] = useState(null)
-
-  const loadData = async () => {
-    try {
-      setLoading(true)
-      setFetchError(null)
-      const res = await getSupporterData()
-      setData(res)
-    } catch (err) {
-      setFetchError(err?.message || 'Failed to load supporter wellness guide.')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    loadData()
-  }, [])
-
-  if (loading) {
-    return <div className="animate-pulse text-ink-400 text-sm py-20 text-center">Loading wellness guide…</div>
-  }
-
-  if (fetchError) {
-    return (
-      <div className="text-center py-20 flex flex-col items-center gap-3">
-        <AlertCircle size={36} className="text-rose-500" />
-        <p className="text-rose-600 font-medium">Could not load wellness guide</p>
-        <p className="text-ink-500 text-sm max-w-sm">{fetchError}</p>
-        <Button variant="outline" size="sm" icon={RefreshCw} onClick={loadData}>
-          Retry
-        </Button>
-      </div>
-    )
-  }
-
-  const sharedPhase = data?.shared?.cyclePhase
-  const phaseKey = sharedPhase
-    ? Object.keys(PHASES).find((k) => PHASES[k].label?.toLowerCase() === sharedPhase?.toLowerCase())
-    : null
-
-  const phaseGuide = phaseKey ? PHASE_SUPPORT_GUIDES[phaseKey] : null
+  const [active, setActive] = useState(null)
 
   return (
     <div className="flex flex-col gap-6 animate-fadeIn">
-      {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        <div>
-          <h1 className="font-display text-2xl sm:text-3xl font-semibold text-ink-900">
-            Supporter wellness & care
-          </h1>
-          <p className="text-ink-500 text-sm mt-1">
-            Practical, evidence-informed ways to offer compassionate everyday care.
-          </p>
-        </div>
-        {phaseKey && <PhaseBadge phaseKey={phaseKey} />}
+
+      {/* HEADER */}
+      <div>
+        <h1 className="font-display text-2xl sm:text-3xl font-semibold text-ink-900">
+          Supporter wellness & care
+        </h1>
+
+        <p className="text-ink-500 text-sm mt-1">
+          Practical, respectful ways to support someone through everyday
+          physical, emotional, and personal wellbeing needs.
+        </p>
       </div>
 
-      {/* Phase Context Guide if shared */}
-      {phaseGuide && (
-        <Card className="flex items-start gap-4 bg-teal-50/60 border-teal-100">
-          <div className="w-11 h-11 rounded-xl bg-teal-600 flex items-center justify-center shrink-0 mt-0.5">
-            <HandHeart size={22} className="text-white" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-xs font-semibold text-teal-700 uppercase tracking-wide">
-                Current Phase Focus: {phaseGuide.focus}
-              </span>
-            </div>
-            <p className="text-sm text-ink-800 leading-relaxed font-medium">
-              {phaseGuide.guidance}
-            </p>
-          </div>
-        </Card>
-      )}
-
-      {/* Wellness Cards Grid */}
+      {/* WELLNESS TOPICS */}
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {SUPPORTER_WELLNESS_CATEGORIES.map((c) => (
-          <RecommendationCard
-            key={c.key}
-            icon={c.icon}
-            title={c.title}
-            tip={c.tip}
-            color={c.color}
-          />
-        ))}
+        {SUPPORTER_WELLNESS_CATEGORIES.map((topic) => {
+          const Icon = topic.icon
+
+          return (
+            <Card
+              key={topic.key}
+              hover
+              as="button"
+              onClick={() => setActive(topic)}
+              className="text-left flex flex-col items-start"
+            >
+              <div
+                className={[
+                  'w-11 h-11 rounded-xl flex items-center justify-center mb-3',
+                  topic.iconBg,
+                ].join(' ')}
+              >
+                <Icon
+                  size={20}
+                  className={topic.iconColor}
+                  strokeWidth={2}
+                />
+              </div>
+
+              <h3 className="font-display font-semibold text-ink-900 text-[15px] mb-1">
+                {topic.title}
+              </h3>
+
+              <p className="text-sm text-ink-500 leading-relaxed">
+                {topic.tip}
+              </p>
+            </Card>
+          )
+        })}
       </div>
 
-      {/* General Care Advice Card */}
-      <Card className="flex flex-col gap-3">
-        <div className="flex items-center gap-2">
-          <Clock size={18} className="text-teal-600" />
+      {/* EVERYDAY SUPPORTIVE HABITS */}
+      <Card>
+        <div className="flex items-center gap-2 mb-4">
+          <Clock
+            size={18}
+            className="text-teal-600"
+          />
+
           <h2 className="font-display font-semibold text-ink-900 text-base sm:text-lg">
             Everyday Supportive Habits
           </h2>
         </div>
-        <div className="grid sm:grid-cols-2 gap-4 text-sm text-ink-700">
-          <div className="p-3.5 rounded-xl bg-bg border border-ink-100 flex flex-col gap-1">
-            <p className="font-semibold text-ink-900">Check in proactively</p>
+
+        <div className="grid sm:grid-cols-3 gap-3">
+
+          <div className="p-4 rounded-xl bg-bg border border-ink-100 flex flex-col gap-1.5">
+            <p className="font-semibold text-ink-900 text-sm">
+              Check in thoughtfully
+            </p>
+
             <p className="text-xs text-ink-500 leading-relaxed">
-              A short message like "Thinking of you, let me know if you need anything today" shows care without pressure.
+              “Thinking of you. Let me know if you need anything today.”
+              shows care without creating pressure.
             </p>
           </div>
-          <div className="p-3.5 rounded-xl bg-bg border border-ink-100 flex flex-col gap-1">
-            <p className="font-semibold text-ink-900">Avoid assumptions</p>
+
+          <div className="p-4 rounded-xl bg-bg border border-ink-100 flex flex-col gap-1.5">
+            <p className="font-semibold text-ink-900 text-sm">
+              Offer, don't assume
+            </p>
+
             <p className="text-xs text-ink-500 leading-relaxed">
-              Do not blame emotions or fatigue solely on the menstrual cycle. Treat every interaction with genuine respect.
+              Ask whether they want help, company, or some space instead
+              of deciding for them.
             </p>
           </div>
+
+          <div className="p-4 rounded-xl bg-bg border border-ink-100 flex flex-col gap-1.5">
+            <p className="font-semibold text-ink-900 text-sm">
+              Respect changing needs
+            </p>
+
+            <p className="text-xs text-ink-500 leading-relaxed">
+              What helped yesterday may not be what they want today.
+              Let their current preference guide your support.
+            </p>
+          </div>
+
         </div>
       </Card>
+
+      {/* DETAIL MODAL */}
+      <Modal
+        open={Boolean(active)}
+        onClose={() => setActive(null)}
+        title={active?.title}
+        size="lg"
+      >
+        <div className="flex flex-col gap-4">
+
+          {active?.content.map((item, index) => (
+            <div
+              key={index}
+              className="flex items-start gap-3"
+            >
+              <span className="w-6 h-6 rounded-full bg-teal-50 text-teal-600 flex items-center justify-center text-xs font-semibold shrink-0 mt-0.5">
+                {index + 1}
+              </span>
+
+              <p className="text-sm text-ink-700 leading-relaxed">
+                {item}
+              </p>
+            </div>
+          ))}
+
+        </div>
+      </Modal>
+
     </div>
   )
 }

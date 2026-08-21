@@ -525,47 +525,59 @@ export default function SupporterConnection() {
                         </div>
 
                         {/* Details */}
-                        <div className="grid sm:grid-cols-2 gap-3 mt-5">
-                          <div className="rounded-xl bg-ink-50 p-3">
-                            <p className="text-[11px] uppercase tracking-wide text-ink-400">
-                              Account type
-                            </p>
+                          <div className="grid sm:grid-cols-2 gap-3 mt-5">
 
-                            <p className="text-sm font-medium text-ink-800 mt-1">
-                              {profile.role || 'Supporter'}
-                            </p>
+                            <div className="rounded-xl bg-ink-50 p-3">
+                              <p className="text-[11px] uppercase tracking-wide text-ink-400">
+                                Relationship
+                              </p>
+
+                              <p className="text-sm font-medium text-ink-800 mt-1">
+                                {profile.relationship || 'Not provided'}
+                              </p>
+                            </div>
+
+                            <div className="rounded-xl bg-ink-50 p-3">
+                              <p className="text-[11px] uppercase tracking-wide text-ink-400">
+                                Account type
+                              </p>
+
+                              <p className="text-sm font-medium text-ink-800 mt-1 capitalize">
+                                {profile.role || 'supporter'}
+                              </p>
+                            </div>
+
+                            <div className="rounded-xl bg-ink-50 p-3 sm:col-span-2">
+                              <p className="text-[11px] uppercase tracking-wide text-ink-400">
+                                How they want to help
+                              </p>
+
+                              <p className="text-sm font-medium text-ink-800 mt-1">
+                                {profile.helpStyle || 'Not provided'}
+                              </p>
+                            </div>
+
+                            <div className="rounded-xl bg-ink-50 p-3">
+                              <p className="text-[11px] uppercase tracking-wide text-ink-400">
+                                Notifications
+                              </p>
+
+                              <p className="text-sm font-medium text-ink-800 mt-1">
+                                {profile.notifications ? 'Enabled' : 'Disabled'}
+                              </p>
+                            </div>
+
+                            <div className="rounded-xl bg-ink-50 p-3">
+                              <p className="text-[11px] uppercase tracking-wide text-ink-400">
+                                Invitation code
+                              </p>
+
+                              <p className="text-sm font-mono font-bold text-ink-800 mt-1">
+                                {connection.inviteCode || '—'}
+                              </p>
+                            </div>
+
                           </div>
-
-                          <div className="rounded-xl bg-ink-50 p-3">
-                            <p className="text-[11px] uppercase tracking-wide text-ink-400">
-                              Phone
-                            </p>
-
-                            <p className="text-sm font-medium text-ink-800 mt-1">
-                              {profile.phone || 'Not provided'}
-                            </p>
-                          </div>
-
-                          <div className="rounded-xl bg-ink-50 p-3">
-                            <p className="text-[11px] uppercase tracking-wide text-ink-400">
-                              City
-                            </p>
-
-                            <p className="text-sm font-medium text-ink-800 mt-1">
-                              {profile.city || 'Not provided'}
-                            </p>
-                          </div>
-
-                          <div className="rounded-xl bg-ink-50 p-3">
-                            <p className="text-[11px] uppercase tracking-wide text-ink-400">
-                              Invitation code
-                            </p>
-
-                            <p className="text-sm font-mono font-bold text-ink-800 mt-1">
-                              {connection.inviteCode || '—'}
-                            </p>
-                          </div>
-                        </div>
 
                         {/* Actions */}
                         <div className="flex gap-2 mt-5">
@@ -640,55 +652,98 @@ export default function SupporterConnection() {
               ) : (
                 <div className="flex flex-col gap-3">
                   {activeConnections.map((connection) => {
-                    const profile =
-                      connection.supporterProfile || {}
+                    const profile = connection.supporterProfile || {}
 
                     return (
                       <div
                         key={connection.id}
-                        className="flex items-center justify-between gap-4 rounded-2xl bg-ink-50/60 p-4"
+                        className="rounded-2xl border border-ink-100 bg-white p-5"
                       >
-                        <div className="flex items-center gap-3">
-                          <div className="w-11 h-11 rounded-full bg-teal-50 flex items-center justify-center">
-                            <Check
-                              size={20}
-                              className="text-teal-600"
-                            />
+                        {/* Header */}
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 rounded-full bg-teal-50 flex items-center justify-center">
+                              <Check
+                                size={20}
+                                className="text-teal-600"
+                              />
+                            </div>
+
+                            <div>
+                              <p className="font-display font-semibold text-ink-900">
+                                {profile.name ||
+                                  connection.supporterName ||
+                                  'Supporter'}
+                              </p>
+
+                              <p className="text-sm text-ink-500 mt-0.5">
+                                {profile.email || 'Email not available'}
+                              </p>
+
+                              <p className="text-xs text-teal-600 font-semibold mt-1">
+                                Connected
+                              </p>
+                            </div>
                           </div>
 
-                          <div>
-                            <p className="font-semibold text-ink-900">
-                              {profile.name ||
-                                connection.supporterName ||
-                                'Supporter'}
+                          <Button
+                            variant="danger"
+                            size="sm"
+                            icon={UserX}
+                            onClick={() => {
+                              setSelectedConnection(connection)
+                              setConfirmOpen(true)
+                            }}
+                            disabled={actionLoading}
+                          >
+                            Disconnect
+                          </Button>
+                        </div>
+
+                        {/* Profile details */}
+                        <div className="grid sm:grid-cols-2 gap-3 mt-5">
+                          <div className="rounded-xl bg-ink-50 p-3">
+                            <p className="text-[11px] uppercase tracking-wide text-ink-400">
+                              Relationship
                             </p>
 
-                            {profile.email && (
-                              <p className="text-xs text-ink-500 mt-0.5">
-                                {profile.email}
-                              </p>
-                            )}
+                            <p className="text-sm font-medium text-ink-800 mt-1">
+                              {profile.relationship || 'Not provided'}
+                            </p>
+                          </div>
 
-                            <p className="text-xs text-teal-600 font-medium mt-1">
-                              Connected
+                          <div className="rounded-xl bg-ink-50 p-3">
+                            <p className="text-[11px] uppercase tracking-wide text-ink-400">
+                              How they help
+                            </p>
+
+                            <p className="text-sm font-medium text-ink-800 mt-1">
+                              {profile.helpStyle || 'Not provided'}
+                            </p>
+                          </div>
+
+                          <div className="rounded-xl bg-ink-50 p-3">
+                            <p className="text-[11px] uppercase tracking-wide text-ink-400">
+                              Notifications
+                            </p>
+
+                            <p className="text-sm font-medium text-ink-800 mt-1">
+                              {profile.notifications
+                                ? 'Enabled'
+                                : 'Disabled'}
+                            </p>
+                          </div>
+
+                          <div className="rounded-xl bg-ink-50 p-3">
+                            <p className="text-[11px] uppercase tracking-wide text-ink-400">
+                              Account type
+                            </p>
+
+                            <p className="text-sm font-medium text-ink-800 mt-1 capitalize">
+                              {profile.role || 'supporter'}
                             </p>
                           </div>
                         </div>
-
-                        <Button
-                          variant="danger"
-                          size="sm"
-                          icon={UserX}
-                          onClick={() => {
-                            setSelectedConnection(
-                              connection,
-                            )
-                            setConfirmOpen(true)
-                          }}
-                          disabled={actionLoading}
-                        >
-                          Disconnect
-                        </Button>
                       </div>
                     )
                   })}

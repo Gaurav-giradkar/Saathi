@@ -121,75 +121,124 @@ const isInviteExpired = (invite) => {
 
 async function publishSharedProjection(ownerUid) {
   const owner = (
-    await getDoc(doc(db, 'users', ownerUid))
+    await getDoc(
+      doc(db, 'users', ownerUid),
+    )
   ).data() || {}
 
-  const permissions = owner.sharingPermissions || {}
-  const cycle = computeCycleInfo(owner.cycleSetup)
-  const health = await getHealthData().catch(() => null)
+  const permissions =
+    owner.sharingPermissions || {}
 
-  const connections = await getDocs(
-    query(
-      collection(db, 'connections'),
-      where('ownerUid', '==', ownerUid),
-      where('status', '==', 'active'),
-    ),
-  )
+  const cycle =
+    computeCycleInfo(
+      owner.cycleSetup,
+    )
+
+  const health =
+    await getHealthData().catch(
+      () => null,
+    )
+
+  const connections =
+    await getDocs(
+      query(
+        collection(db, 'connections'),
+        where(
+          'ownerUid',
+          '==',
+          ownerUid,
+        ),
+        where(
+          'status',
+          '==',
+          'active',
+        ),
+      ),
+    )
 
   const shared = {
-    cyclePhase: permissions.cyclePhase
-      ? cycle.phase?.label || null
-      : null,
+  permissions,
 
-    periodStatus: permissions.periodStatus
-      ? cycle.isOnPeriod
-        ? 'On period'
-        : 'Not on period'
-      : null,
+  cyclePhase: permissions.cyclePhase
+    ? cycle.phase?.label || null
+    : null,
 
-    expectedPeriod: permissions.expectedPeriod
-      ? cycle.nextPeriodDate
-      : null,
+  periodStatus: permissions.periodStatus
+  ? health?.periodStatus || 'Not on period'
+  : null,
 
-    painLevel: permissions.painLevel
-      ? health?.pain ?? null
-      : null,
+  expectedPeriod: permissions.expectedPeriod
+    ? cycle.nextPeriodDate
+    : null,
 
-    symptoms: permissions.symptoms
-      ? health?.symptoms || []
-      : [],
+  painLevel: permissions.painLevel
+    ? health?.pain ?? null
+    : null,
 
-    mood: permissions.mood
-      ? health?.mood ?? null
-      : null,
+  symptoms: permissions.symptoms
+    ? health?.symptoms || []
+    : [],
 
-    energy: permissions.energy
-      ? health?.energy ?? null
-      : null,
+  mood: permissions.mood
+    ? health?.moods || health?.mood || null
+    : null,
 
-    sleep: permissions.sleep
-      ? health?.sleep ?? null
-      : null,
+  dietNutrition: permissions.dietNutrition
+    ? {
+        meals: health?.meals || [],
+        appetite: health?.appetite || '',
+        cravings: health?.cravings || [],
+        waterLiters: health?.waterLiters ?? null,
+      }
+    : null,
 
-    updatedAt: serverTimestamp(),
-  }
+  sleep: permissions.sleep
+    ? {
+        duration: health?.sleep ?? null,
+        quality: health?.sleepQuality || '',
+        issues: health?.sleepIssues || [],
+      }
+    : null,
 
-  await Promise.all(
-    connections.docs.map((connection) =>
-      setDoc(
-        doc(
-          db,
-          'connections',
-          connection.id,
-          'shared',
-          'currentStatus',
-        ),
-        shared,
-      ),
-    ),
-  )
+  medicalInfo: permissions.medicalInfo
+    ? {
+        notes: health?.notes || '',
+        painLocations: health?.painLocations || [],
+        painTypes: health?.painTypes || [],
+        relief: health?.relief || [],
+      }
+    : null,
+
+  energy: permissions.energy
+    ? health?.energy || ''
+    : null,
+
+  updatedAt: serverTimestamp(),
 }
 
+  await Promise.all(
+  connections.docs.map(async (connection) => {
+    await updateDoc(
+      doc(db, 'connections', connection.id),
+      {
+        sharing: permissions,
+        updatedAt: serverTimestamp(),
+      },
+    )
+
+    await setDoc(
+      doc(
+        db,
+        'connections',
+        connection.id,
+        'shared',
+        'currentStatus',
+      ),
+      shared,
+    )
+  }),
+)
+}
 /* ==========================================================================
    CYCLE
 ========================================================================== */
@@ -886,6 +935,8 @@ export async function saveHealthLog(
     'FIREBASE WRITE COMPLETE',
   )
 
+  await publishSharedProjection(user.uid)
+
   return {
     ...normalisedEntry,
     date,
@@ -1016,29 +1067,62 @@ export async function getRecommendations() {
 export async function getSharingPermissions() {
   const data = await getUserData()
 
-  return (
-    data.sharingPermissions ||
-    SHARING_CATEGORIES.reduce(
-      (all, item) => ({
-        ...all,
-        [item.key]:
-          item.defaultOn ?? false,
-      }),
-      {},
-    )
+  const defaults = SHARING_CATEGORIES.reduce(
+    (all, item) => ({
+      ...all,
+      [item.key]: item.defaultOn ?? false,
+    }),
+    {},
   )
+
+  const permissions = {
+    ...defaults,
+    ...(data.sharingPermissions || {}),
+  }
+
+  // Locked permissions are always OFF.
+  SHARING_CATEGORIES.forEach((item) => {
+    if (item.locked) {
+      permissions[item.key] = false
+    }
+  })
+
+  return permissions
 }
 
-export async function updateSharingPermissions(
-  key,
-  value,
-) {
+export async function updateSharingPermissions(key, value) {
   const user = requireUser()
+
+  const category = SHARING_CATEGORIES.find(
+    (item) => item.key === key,
+  )
+
+  if (!category) {
+    throw new Error('Unknown sharing permission.')
+  }
 
   const permissions =
     await getSharingPermissions()
 
-  permissions[key] = value
+  // Locked permission cannot be enabled.
+  if (category.locked) {
+    permissions[key] = false
+
+    await setDoc(
+      doc(db, 'users', user.uid),
+      {
+        sharingPermissions: permissions,
+        updatedAt: serverTimestamp(),
+      },
+      { merge: true },
+    )
+
+    await publishSharedProjection(user.uid)
+
+    return permissions
+  }
+
+  permissions[key] = Boolean(value)
 
   await setDoc(
     doc(db, 'users', user.uid),
@@ -1049,9 +1133,7 @@ export async function updateSharingPermissions(
     { merge: true },
   )
 
-  await publishSharedProjection(
-    user.uid,
-  )
+  await publishSharedProjection(user.uid)
 
   return permissions
 }
@@ -1149,21 +1231,15 @@ export async function generateInviteCode() {
    Saves supporter profile before owner approval.
 --------------------------------------------------------------------------- */
 
-export async function submitInviteCode(
-  code,
-) {
+export async function submitInviteCode(code) {
   const user = requireUser()
 
-  const normalizedCode = String(
-    code || '',
-  )
+  const normalizedCode = String(code || '')
     .trim()
     .toUpperCase()
 
   if (!normalizedCode) {
-    throw new Error(
-      'Enter an invitation code.',
-    )
+    throw new Error('Enter an invitation code.')
   }
 
   const inviteRef = doc(
@@ -1172,21 +1248,15 @@ export async function submitInviteCode(
     normalizedCode,
   )
 
-  const inviteSnap =
-    await getDoc(inviteRef).catch(
-      (err) => {
-        if (
-          err?.code ===
-          'permission-denied'
-        ) {
-          throw new Error(
-            'Unable to resolve invitation. Please verify the code or generate a fresh invitation.',
-          )
-        }
+  const inviteSnap = await getDoc(inviteRef).catch((err) => {
+    if (err?.code === 'permission-denied') {
+      throw new Error(
+        'Unable to resolve invitation. Please verify the code or generate a fresh invitation.',
+      )
+    }
 
-        throw err
-      },
-    )
+    throw err
+  })
 
   if (!inviteSnap.exists()) {
     throw new Error(
@@ -1196,15 +1266,13 @@ export async function submitInviteCode(
 
   const invite = inviteSnap.data()
 
-  if (
-    invite.status !== 'pending'
-  ) {
+  if (invite.status !== 'pending') {
     throw new Error(
       'That invitation is no longer active.',
     )
   }
 
-  /* 24-hour expiry */
+  // 24-hour expiry
   if (isInviteExpired(invite)) {
     await updateDoc(inviteRef, {
       status: 'expired',
@@ -1220,8 +1288,7 @@ export async function submitInviteCode(
         ),
         {
           status: 'expired',
-          updatedAt:
-            serverTimestamp(),
+          updatedAt: serverTimestamp(),
         },
       ).catch(() => {})
     }
@@ -1243,21 +1310,17 @@ export async function submitInviteCode(
     invite.connectionId,
   )
 
-  const connectionSnap =
-    await getDoc(connectionRef).catch(
-      (err) => {
-        if (
-          err?.code ===
-          'permission-denied'
-        ) {
-          throw new Error(
-            'Permission denied reading connection. Please ensure a new invitation was generated.',
-          )
-        }
+  const connectionSnap = await getDoc(
+    connectionRef,
+  ).catch((err) => {
+    if (err?.code === 'permission-denied') {
+      throw new Error(
+        'Permission denied reading connection. Please ensure a new invitation was generated.',
+      )
+    }
 
-        throw err
-      },
-    )
+    throw err
+  })
 
   if (!connectionSnap.exists()) {
     throw new Error(
@@ -1265,20 +1328,15 @@ export async function submitInviteCode(
     )
   }
 
-  const connection =
-    connectionSnap.data()
+  const connection = connectionSnap.data()
 
-  if (
-    connection.status !== 'pending'
-  ) {
+  if (connection.status !== 'pending') {
     throw new Error(
       'That invitation is no longer active.',
     )
   }
 
-  if (
-    connection.ownerUid === user.uid
-  ) {
+  if (connection.ownerUid === user.uid) {
     throw new Error(
       'You cannot connect to your own invitation code.',
     )
@@ -1290,55 +1348,80 @@ export async function submitInviteCode(
     )
   }
 
+  /*
+   * Get the full supporter profile.
+   * SupporterSetup.jsx saves:
+   * name
+   * relationship
+   * helpStyle
+   * notifications
+   */
   let supporterProfile = {
-  uid: user.uid,
-  name: user.displayName || 'Supporter',
-  email: user.email || '',
-  phone: '',
-  city: '',
-  photoUrl: '',
-  role: 'supporter',
-}
-
-try {
-  const userDoc = await getDoc(
-    doc(db, 'users', user.uid),
-  )
-
-  if (userDoc.exists()) {
-    const profile = userDoc.data() || {}
-
-    supporterProfile = {
-      uid: user.uid,
-      name:
-        profile.name ||
-        user.displayName ||
-        'Supporter',
-      email:
-        profile.email ||
-        user.email ||
-        '',
-      phone: profile.phone || '',
-      city: profile.city || '',
-      photoUrl: profile.photoUrl || '',
-      role: profile.role || 'supporter',
-    }
+    uid: user.uid,
+    name: user.displayName || 'Supporter',
+    email: user.email || '',
+    relationship: '',
+    helpStyle: '',
+    notifications: false,
+    role: 'supporter',
   }
-} catch {
-  // Keep basic auth details if profile lookup fails.
-}
 
+  try {
+    const userDoc = await getDoc(
+      doc(db, 'users', user.uid),
+    )
+
+    if (userDoc.exists()) {
+      const profile = userDoc.data() || {}
+
+      supporterProfile = {
+        uid: user.uid,
+
+        name:
+          profile.name ||
+          user.displayName ||
+          'Supporter',
+
+        email:
+          profile.email ||
+          user.email ||
+          '',
+
+        relationship:
+          profile.relationship || '',
+
+        helpStyle:
+          profile.helpStyle || '',
+
+        notifications:
+          Boolean(profile.notifications),
+
+        role:
+          profile.role || 'supporter',
+      }
+    }
+  } catch {
+    // Keep basic authentication details if profile lookup fails.
+  }
+
+  /*
+   * Save supporter details into the connection.
+   * The owner can now see these details BEFORE approving.
+   */
   await updateDoc(connectionRef, {
     supporterUid: user.uid,
-    supporterName: supporterProfile.name,
+
+    supporterName:
+      supporterProfile.name,
+
     supporterProfile,
+
     updatedAt: serverTimestamp(),
   })
 
   return {
     status: 'pending',
-    connectionId:
-      connectionRef.id,
+    connectionId: connectionRef.id,
   }
 }
 
@@ -1843,52 +1926,80 @@ export async function getSupporterData() {
       ),
     )
 
-  const shared = snapshot.exists()
-    ? snapshot.data()
-    : null
+  const shared =
+    snapshot.exists()
+      ? snapshot.data()
+      : null
 
-  let suggestionKey =
-    'noDataShared'
+  const permissions =
+  shared?.permissions ||
+  activeConnection.sharing ||
+  {}
+
+  let suggestionKey = 'noDataShared'
 
   if (shared) {
     if (
+      permissions.painLevel &&
       shared.painLevel != null &&
       Number(shared.painLevel) >= 3
     ) {
-      suggestionKey =
-        'painReported'
+      suggestionKey = 'painReported'
     } else if (
-      shared.periodStatus &&
-      String(
-        shared.periodStatus,
-      )
-        .toLowerCase()
-        .includes('on period')
+      permissions.periodStatus &&
+      shared.periodStatus === 'On period'
     ) {
-      suggestionKey =
-        'periodActive'
+      suggestionKey = 'periodActive'
     } else if (
-      shared.energy &&
-      (
-        String(shared.energy)
-          .toLowerCase()
-          .includes('low') ||
-        Number(shared.energy) <= 3
-      )
+      permissions.periodStatus &&
+      shared.periodStatus === 'Not on period'
     ) {
-      suggestionKey =
-        'lowEnergyReported'
-    } else {
-      suggestionKey =
-        'noDataShared'
+      suggestionKey = 'periodNotActive'
+    } else if (
+      permissions.energy &&
+      shared.energy
+    ) {
+      const energy =
+        String(shared.energy).toLowerCase()
+
+      if (
+        energy === 'very low' ||
+        energy === 'low'
+      ) {
+        suggestionKey = 'lowEnergyReported'
+      }
     }
   }
 
-  const suggestion =
-    SUPPORT_SUGGESTIONS[
-      suggestionKey
-    ] ||
-    SUPPORT_SUGGESTIONS.noDataShared
+  const fallbackSuggestions = {
+  periodNotActive: {
+    feeling:
+      'Their period is not currently active.',
+
+    help: [
+      'Continue your usual support and check in with them regularly.',
+      'Ask how they are feeling instead of trying to guess.',
+      'Offer practical help with food, chores, or errands when appropriate.',
+      'Respect their preferred level of space and privacy.',
+      'Listen first if they want to talk about their day.',
+      'Support healthy routines such as rest, hydration, and regular meals.',
+    ],
+
+    avoid: [
+      'Assuming they are experiencing pain or menstrual symptoms.',
+      'Assuming you know how they feel based on their cycle.',
+      'Pressuring them to talk when they want privacy.',
+      'Making assumptions about their health from normal mood or energy changes.',
+      'Offering menstrual or medical advice when they have not asked for it.',
+      'Sharing their private health information with others.',
+    ],
+  },
+}
+
+const suggestion =
+  SUPPORT_SUGGESTIONS[suggestionKey] ||
+  fallbackSuggestions[suggestionKey] ||
+  SUPPORT_SUGGESTIONS.noDataShared
 
   return {
     connection:
@@ -1903,25 +2014,24 @@ export async function getSupporterData() {
     shared,
 
     permissions:
+      shared?.permissions ||
       activeConnection.sharing ||
       {},
 
     suggestion: {
       feeling:
         suggestion?.feeling ||
-        'No additional health information has been shared.',
+        'Their period is not currently active.',
 
-      help: Array.isArray(
-        suggestion?.help,
-      )
-        ? suggestion.help
-        : [],
+      help:
+        Array.isArray(suggestion?.help)
+          ? suggestion.help
+          : [],
 
-      avoid: Array.isArray(
-        suggestion?.avoid,
-      )
-        ? suggestion.avoid
-        : [],
+      avoid:
+        Array.isArray(suggestion?.avoid)
+          ? suggestion.avoid
+          : [],
     },
   }
 }
