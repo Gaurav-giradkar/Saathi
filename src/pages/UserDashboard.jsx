@@ -4,12 +4,11 @@ import {
    Sparkles,  Smile,  ArrowRight, ClipboardPlus,
 } from 'lucide-react'
 import Card from '../components/common/Card.jsx'
-import PhaseBadge from '../components/common/PhaseBadge.jsx'
 import RecommendationCard from '../components/common/RecommendationCard.jsx'
 import CycleRing from '../components/charts/CycleRing.jsx'
 import Button from '../components/common/Button.jsx'
 import {
-  getUserData, getCycleData, getInsights, getRecommendations, getHealthData,
+  getUserData, getCycleData, getHealthData,
 } from '../data/api.js'
 
 import saathiGirl from '../images/saathi-girl.png'
@@ -28,30 +27,24 @@ function getGreeting() {
 export default function UserDashboard() {
   const [user, setUser] = useState(null)
   const [cycle, setCycle] = useState(null)
-  const [insights, setInsights] = useState(null)
-  const [recs, setRecs] = useState(null)
   const [todayLog, setTodayLog] = useState(null)
 
   useEffect(() => {
-  Promise.all([
-    getUserData(),
-    getCycleData(),
-    getInsights(),
-    getRecommendations(),
-    getHealthData(),
-  ])
-    .then(([userData, cycleData, insightData, recommendationData, healthData]) => {
-      setUser(userData)
-      setCycle(cycleData)
-      setInsights(insightData)
-      setRecs(recommendationData)
-      setTodayLog(healthData)
-    })
-    .catch((error) => {
-      console.error('Dashboard load error:', error)
-    })
-}, [])
-  
+    Promise.all([
+      getUserData(),
+      getCycleData(),
+      getHealthData(),
+    ])
+      .then(([userData, cycleData, healthData]) => {
+        setUser(userData)
+        setCycle(cycleData)
+        setTodayLog(healthData)
+      })
+      .catch((error) => {
+        console.error('Dashboard load error:', error)
+      })
+  }, [])
+
   if (!user || !cycle) {
     return (
       <div className="animate-pulse text-ink-400 text-sm py-20 text-center">

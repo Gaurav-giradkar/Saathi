@@ -1,6 +1,7 @@
 import React from 'react'
-import * as Icons from 'lucide-react'
+
 import Card from './Card.jsx'
+import CustomIcon from './CustomIcon.jsx'
 
 const COLORS = {
   teal: 'text-teal-600 bg-teal-50',
@@ -9,15 +10,33 @@ const COLORS = {
   plum: 'text-plum-500 bg-plum-50',
 }
 
-export default function RecommendationCard({ icon, title, tip, color = 'rose', onClick }) {
-  const Icon = Icons[icon] || Icons.Sparkles
+export default function RecommendationCard({
+  icon,
+  title,
+  tip,
+  color = 'rose',
+  onClick,
+}) {
   return (
-    <Card hover onClick={onClick} className={onClick ? 'cursor-pointer' : ''} as={onClick ? 'button' : 'div'}>
-      <div className={`w-11 h-11 rounded-xl flex items-center justify-center mb-3 ${COLORS[color]}`}>
-        <Icon size={20} strokeWidth={2} />
+    <Card
+      hover
+      onClick={onClick}
+      className={onClick ? 'cursor-pointer' : ''}
+      as={onClick ? 'button' : 'div'}
+    >
+      <div
+        className={`w-11 h-11 rounded-xl flex items-center justify-center mb-3 ${COLORS[color]}`}
+      >
+        <CustomIcon type={icon} />
       </div>
-      <h4 className="font-display font-semibold text-ink-900 text-[15px] mb-1 text-left">{title}</h4>
-      <p className="text-sm text-ink-500 text-left leading-relaxed">{tip}</p>
+
+      <h4 className="font-display font-semibold text-ink-900 text-[15px] mb-1 text-left">
+        {title}
+      </h4>
+
+      <p className="text-sm text-ink-500 text-left leading-relaxed">
+        {tip}
+      </p>
     </Card>
   )
 }

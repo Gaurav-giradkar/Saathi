@@ -1,34 +1,15 @@
 import React, { useEffect, useState } from 'react'
 
 import {
-  Apple,
-  Dumbbell,
-  Thermometer,
-  Sparkles,
-  ShieldCheck,
-  HeartHandshake,
   X,
   Check,
 } from 'lucide-react'
 
+import CustomIcon from '../components/common/CustomIcon.jsx'
+
 import RecommendationCard from '../components/common/RecommendationCard.jsx'
 import Button from '../components/common/Button.jsx'
 import { getRecommendations } from '../data/api.js'
-
-/*
-|--------------------------------------------------------------------------
-| Icon mapping
-|--------------------------------------------------------------------------
-*/
-
-const ICONS = {
-  Apple,
-  Dumbbell,
-  Thermometer,
-  Sparkles,
-  ShieldCheck,
-  HeartHandshake,
-}
 
 /*
 |--------------------------------------------------------------------------
@@ -361,7 +342,19 @@ export default function HealthWellness() {
               "
             >
               <RecommendationCard
-                icon={category.icon}
+                icon={
+                  category.key === 'nutrition'
+                    ? 'nutrition'
+                    : category.key === 'exercise'
+                      ? 'movement'
+                      : category.key === 'painManagement'
+                        ? 'pain-management'
+                        : category.key === 'selfCare'
+                          ? 'self-care'
+                          : category.key === 'hygiene'
+                            ? 'wellness-hygiene'
+                            : 'wellness-mental'
+                }
                 title={category.title}
                 tip={category.tip}
                 color={category.color}
@@ -435,13 +428,21 @@ export default function HealthWellness() {
                       }
                     `}
                   >
-                    {(() => {
-                      const Icon = ICONS[selectedCategory.icon]
-
-                      if (!Icon) return null
-
-                      return <Icon size={26} strokeWidth={1.8} />
-                    })()}
+                    <CustomIcon
+                      type={
+                        selectedCategory.key === 'nutrition'
+                          ? 'nutrition'
+                          : selectedCategory.key === 'exercise'
+                            ? 'movement'
+                            : selectedCategory.key === 'painManagement'
+                              ? 'pain-management'
+                              : selectedCategory.key === 'selfCare'
+                                ? 'self-care'
+                                : selectedCategory.key === 'hygiene'
+                                  ? 'wellness-hygiene'
+                                  : 'wellness-mental'
+                      }
+                    />
                   </div>
 
                   {/* Title */}

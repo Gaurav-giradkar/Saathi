@@ -1,8 +1,8 @@
 import React, { useState } from 'react'
-import * as Icons from 'lucide-react'
 import { Check, X, Star } from 'lucide-react'
 import Card from '../components/common/Card.jsx'
 import { PRODUCTS } from '../data/mockData.js'
+import CustomIcon from '../components/common/CustomIcon.jsx'
 
 function Stars({ count }) {
   return (
@@ -19,50 +19,106 @@ export default function ProductAdvisor() {
 
   return (
     <div className="flex flex-col gap-6 animate-fadeIn">
+
       <div>
-        <h1 className="font-display text-2xl sm:text-3xl font-semibold text-ink-900">Product advisor</h1>
-        <p className="text-ink-500 text-sm mt-1">Compare menstrual products by comfort, cost, and lifestyle fit.</p>
+        <h1 className="font-display text-2xl sm:text-3xl font-semibold text-ink-900">
+          Product advisor
+        </h1>
+
+        <p className="text-ink-500 text-sm mt-1">
+          Compare menstrual products by comfort, cost, and lifestyle fit.
+        </p>
       </div>
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {PRODUCTS.map((p) => {
-          const Icon = Icons[p.icon] || Icons.Package
           const isOpen = expanded === p.id
+
           return (
             <Card key={p.id} hover className="flex flex-col">
-              <div className="w-11 h-11 rounded-xl bg-rose-50 flex items-center justify-center mb-3">
-                <Icon size={20} className="text-rose-500" strokeWidth={2} />
+
+              <div className="w-11 h-11 rounded-xl bg-rose-50 flex items-center justify-center mb-3 text-rose-500">
+                <CustomIcon
+                  type={
+                    p.name === 'Sanitary Pads'
+                      ? 'sanitary-pad'
+                      : p.name === 'Tampons'
+                        ? 'tampon'
+                        : p.name === 'Menstrual Cups'
+                          ? 'menstrual-cup'
+                          : 'period-underwear'
+                  }
+                />
               </div>
-              <h3 className="font-display font-semibold text-ink-900 text-base mb-1">{p.name}</h3>
-              <p className="text-xs text-ink-500 mb-3 text-justify">{p.bestFor}</p>
+
+              <h3 className="font-display font-semibold text-ink-900 text-base mb-1">
+                {p.name}
+              </h3>
+
+              <p className="text-xs text-ink-500 mb-3 text-justify">
+                {p.bestFor}
+              </p>
+
               <div className="flex items-center justify-between text-xs text-ink-500 mb-1">
-                <span>Comfort</span><Stars count={p.comfort} />
+                <span>Comfort</span>
+                <Stars count={p.comfort} />
               </div>
+
               <div className="flex items-center justify-between text-xs text-ink-500 mb-3">
-                <span>Eco-friendliness</span><Stars count={p.ecoScore} />
+                <span>Eco-friendliness</span>
+                <Stars count={p.ecoScore} />
               </div>
-              <p className="text-sm font-semibold text-ink-800 mb-3">{p.costPerCycle} <span className="text-xs text-ink-400 font-normal">/ cycle</span></p>
+
+              <p className="text-sm font-semibold text-ink-800 mb-3">
+                {p.costPerCycle}
+                <span className="text-xs text-ink-400 font-normal">
+                  {' '}/ cycle
+                </span>
+              </p>
+
               <button
                 onClick={() => setExpanded(isOpen ? null : p.id)}
                 className="text-sm font-semibold text-rose-600 hover:text-rose-700 mt-auto text-left"
               >
                 {isOpen ? 'Hide details' : 'See pros & cons'}
               </button>
+
               {isOpen && (
                 <div className="mt-3 pt-3 border-t border-ink-100 flex flex-col gap-2 animate-fadeIn">
                   {p.pros.map((pro, i) => (
-                    <p key={i} className="text-xs text-ink-600 flex gap-1.5"><Check size={13} className="text-teal-500 mt-0.5 shrink-0" /> {pro}</p>
+                    <p
+                      key={i}
+                      className="text-xs text-ink-600 flex gap-1.5"
+                    >
+                      <Check
+                        size={13}
+                        className="text-teal-500 mt-0.5 shrink-0"
+                      />
+                      {pro}
+                    </p>
                   ))}
+
                   {p.cons.map((con, i) => (
-                    <p key={i} className="text-xs text-ink-600 flex gap-1.5"><X size={13} className="text-rose-400 mt-0.5 shrink-0" /> {con}</p>
+                    <p
+                      key={i}
+                      className="text-xs text-ink-600 flex gap-1.5"
+                    >
+                      <X
+                        size={13}
+                        className="text-rose-400 mt-0.5 shrink-0"
+                      />
+                      {con}
+                    </p>
                   ))}
                 </div>
               )}
+
             </Card>
           )
         })}
       </div>
 
+      {/* Comparison table */}
       <Card padded={false} className="overflow-x-auto">
         <table className="w-full text-sm min-w-[640px]">
           <thead>
@@ -70,11 +126,9 @@ export default function ProductAdvisor() {
               <th className="py-3 px-5 text-center font-semibold">
                 Product
               </th>
-
               <th className="py-3 px-5 text-center font-semibold">
                 Absorbency
               </th>
-
               <th className="py-3 px-5 text-center font-semibold">
                 Reusable
               </th>
@@ -91,19 +145,16 @@ export default function ProductAdvisor() {
                     : ''
                 }
               >
-                {/* Product */}
                 <td className="py-3 px-5 text-center font-medium text-ink-800">
                   {p.name}
                 </td>
 
-                {/* Absorbency */}
                 <td className="py-3 px-5 text-center text-ink-600">
                   <div className="text-justify max-w-xl mx-auto">
                     {p.absorbency}
                   </div>
                 </td>
 
-                {/* Reusable */}
                 <td className="py-3 px-5 text-center">
                   {p.reusable ? (
                     <Check
@@ -122,6 +173,7 @@ export default function ProductAdvisor() {
           </tbody>
         </table>
       </Card>
+
     </div>
   )
 }

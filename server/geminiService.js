@@ -619,50 +619,109 @@ Generate structured recommendation for "${category}". Ground advice only in the 
 ========================================================================== */
 export async function generateDailySummary({ date, cycle = {}, health = {} }) {
   const systemInstruction = `
-${BASE_SYSTEM_PROMPT}
-You generate a factual, concise Daily Health Summary for Saathi.
-Output MUST be valid JSON with the exact structure:
-{
-  "summary": "A short, clear narrative paragraph (2-3 sentences) summarizing today's check-in factually.",
-  "keyPoints": ["point 1", "point 2", "point 3"]
-}
-Do NOT wrap in markdown fences. Do NOT invent missing data.
-`
+    ${BASE_SYSTEM_PROMPT}
+
+    You generate a detailed Daily Health Report for Saathi.
+
+    Analyze today's logged information and explain what the user recorded in
+    plain, understandable language.
+
+    Return ONLY valid JSON:
+
+    {
+      "report": "A detailed 4-6 sentence interpretation of today's check-in.",
+      "symptomAnalysis": [
+        {
+          "symptom": "symptom name",
+          "explanation": "What this symptom can commonly be associated with, without diagnosing.",
+          "context": "How this relates to today's logged data."
+        }
+      ],
+      "overallObservation": "A concise overall interpretation of today's wellbeing.",
+      "focus": [
+        "2-3 practical actions relevant to today's logged data"
+      ]
+    }
+
+    Rules:
+    - Use only today's logged data.
+    - Explain symptoms individually when symptoms are logged.
+    - Explain whether a symptom can be commonly experienced around menstruation
+      without saying that it is definitely caused by the cycle.
+    - Consider pain level, sleep, mood, energy, hydration, and other logged factors
+      when relevant.
+    - Never diagnose.
+    - Never say a symptom is definitely normal or harmless.
+    - Do not invent missing information.
+    - Do not claim that one day establishes a long-term pattern.
+    - Mention medical evaluation when symptoms are severe, worsening, persistent,
+      unusual, or significantly disruptive.
+    - Do not repeat the date inside the report.
+    `
 
   const prompt = `
-Date: ${date}
-Cycle: ${JSON.stringify(cycle)}
-Today's Logged Health Data: ${JSON.stringify(health)}
+  Cycle Information:
+  ${JSON.stringify(cycle)}
 
-Generate today's daily summary based strictly on logged entries.
-`
+  Today's Logged Health Data:
+  ${JSON.stringify(health)}
 
-  const result = await callGeminiApi({ systemInstruction, prompt, isJson: true })
+  Analyze today's check-in and generate the detailed Daily Health Report.
+  `
+
+  const result = await callGeminiApi({
+    systemInstruction,
+    prompt,
+    isJson: true,
+  })
 
   if (result.success && result.text) {
     const parsed = parseJsonSafely(result.text, null)
-    if (parsed && typeof parsed === 'object') {
-      const summary = typeof parsed.summary === 'string' ? parsed.summary : (typeof parsed.narrative === 'string' ? parsed.narrative : '')
-      if (summary) {
-        return {
-          summary,
-          keyPoints: Array.isArray(parsed.keyPoints)
-            ? parsed.keyPoints
-            : Array.isArray(parsed.highlights)
-            ? parsed.highlights
-            : [],
-          source: 'gemini',
-        }
+
+    if (
+      parsed &&
+      typeof parsed === 'object' &&
+      typeof parsed.report === 'string'
+    ) {
+      return {
+        report: parsed.report,
+
+        symptomAnalysis: Array.isArray(parsed.symptomAnalysis)
+          ? parsed.symptomAnalysis
+          : [],
+
+        overallObservation:
+          typeof parsed.overallObservation === 'string'
+            ? parsed.overallObservation
+            : '',
+
+        focus: Array.isArray(parsed.focus)
+          ? parsed.focus
+          : [],
+
+        source: 'gemini',
       }
     }
   }
 
   return {
-    summary: `Daily check-in recorded for ${date}. Keeping consistent logs helps identify trends in your comfort, energy, and cycle patterns over time.`,
-    keyPoints: [
-      health.periodStatus ? `Period status: ${health.periodStatus}` : 'Check-in logged for today',
-      health.pain != null ? `Pain level recorded: ${health.pain}/10` : 'Wellness check-in completed',
-      health.energy ? `Energy level noted: ${health.energy}` : 'Rest and hydration prioritized',
+    summary:
+      'Your health check-in has been recorded. Saathi will use your logged information to help you understand your wellbeing over time.',
+    highlights: [
+      health.periodStatus
+        ? `Period status: ${health.periodStatus}`
+        : 'Check-in logged for today',
+      health.pain != null
+        ? `Pain level recorded: ${health.pain}/10`
+        : 'Pain was not recorded',
+      health.energy
+        ? `Energy level noted: ${health.energy}`
+        : 'Energy was not recorded',
+    ],
+    observations: [],
+    focus: [
+      'Continue tracking your wellbeing consistently.',
+      'Pay attention to how your energy, sleep, and symptoms feel tomorrow.',
     ],
     source: 'fallback',
   }

@@ -109,7 +109,7 @@ export default function ReportsHistory() {
     getDailyAISummary(today)
       .then((res) => {
         console.log('[Reports] Loaded cached daily AI summary:', {
-          date: today,
+    
           hasSummary: Boolean(res?.summary),
           keyPointsCount: res?.keyPoints?.length || 0,
         })
@@ -853,26 +853,117 @@ export default function ReportsHistory() {
               <div className="space-y-4">
                 <div>
                   <p className="text-xs font-bold uppercase tracking-wide text-ink-500 mb-1.5">
-                    Today's Summary
+                    Daily Health Report
                   </p>
+
                   <p className="text-sm sm:text-base text-ink-800 leading-relaxed font-medium">
-                    {dailyAiSummary.summary}
+                    {dailyAiSummary.report}
                   </p>
                 </div>
 
-                {Array.isArray(dailyAiSummary.keyPoints) &&
-                  dailyAiSummary.keyPoints.length > 0 && (
+                {Array.isArray(dailyAiSummary.symptomAnalysis) &&
+                  dailyAiSummary.symptomAnalysis.length > 0 && (
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-wide text-ink-500 mb-2">
+                        Symptom Analysis
+                      </p>
+
+                      <div className="space-y-3">
+                        {dailyAiSummary.symptomAnalysis.map((item, index) => (
+                          <div
+                            key={index}
+                            className="p-3 rounded-xl bg-surface border border-ink-100"
+                          >
+                            <p className="font-semibold text-ink-900 text-sm">
+                              {item.symptom}
+                            </p>
+
+                            <p className="text-xs text-ink-700 mt-1 leading-relaxed">
+                              {item.explanation}
+                            </p>
+
+                            {item.context && (
+                              <p className="text-xs text-ink-500 mt-1.5 leading-relaxed">
+                                {item.context}
+                              </p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {dailyAiSummary.overallObservation && (
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-wide text-ink-500 mb-1.5">
+                        Overall Observation
+                      </p>
+
+                      <p className="text-sm text-ink-800 leading-relaxed">
+                        {dailyAiSummary.overallObservation}
+                      </p>
+                    </div>
+                  )}
+
+                  {Array.isArray(dailyAiSummary.focus) &&
+                    dailyAiSummary.focus.length > 0 && (
+                      <div>
+                        <p className="text-xs font-bold uppercase tracking-wide text-ink-500 mb-1.5">
+                          Today's Focus
+                        </p>
+
+                        <ul className="space-y-1 text-xs sm:text-sm text-ink-700 list-disc list-inside">
+                          {dailyAiSummary.focus.map((item, index) => (
+                            <li key={index}>{item}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                {Array.isArray(dailyAiSummary.highlights) &&
+                  dailyAiSummary.highlights.length > 0 && (
                     <div>
                       <p className="text-xs font-bold uppercase tracking-wide text-ink-500 mb-1.5">
                         Today's Highlights
                       </p>
+
                       <ul className="space-y-1 text-xs sm:text-sm text-ink-700 list-disc list-inside">
-                        {dailyAiSummary.keyPoints.map((point, index) => (
+                        {dailyAiSummary.highlights.map((point, index) => (
                           <li key={index}>{point}</li>
                         ))}
                       </ul>
                     </div>
                   )}
+
+                  {Array.isArray(dailyAiSummary.observations) &&
+                    dailyAiSummary.observations.length > 0 && (
+                      <div>
+                        <p className="text-xs font-bold uppercase tracking-wide text-ink-500 mb-1.5">
+                          Saathi's Observations
+                        </p>
+
+                        <ul className="space-y-1 text-xs sm:text-sm text-ink-700 list-disc list-inside">
+                          {dailyAiSummary.observations.map((item, index) => (
+                            <li key={index}>{item}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {Array.isArray(dailyAiSummary.focus) &&
+                      dailyAiSummary.focus.length > 0 && (
+                        <div>
+                          <p className="text-xs font-bold uppercase tracking-wide text-ink-500 mb-1.5">
+                            Today's Focus
+                          </p>
+
+                          <ul className="space-y-1 text-xs sm:text-sm text-ink-700 list-disc list-inside">
+                            {dailyAiSummary.focus.map((item, index) => (
+                              <li key={index}>{item}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
                   <div className="p-3 rounded-xl bg-surface border border-ink-100">

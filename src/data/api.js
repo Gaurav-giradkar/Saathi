@@ -1052,13 +1052,23 @@ async function triggerDailySummaryGeneration(date, healthEntry) {
 
     const docPayload = {
       date,
-      summary: dataObj.summary || '',
-      keyPoints: Array.isArray(dataObj.keyPoints)
-        ? dataObj.keyPoints
-        : Array.isArray(dataObj.highlights)
-        ? dataObj.highlights
+
+      report: dataObj.report || '',
+
+      symptomAnalysis: Array.isArray(dataObj.symptomAnalysis)
+        ? dataObj.symptomAnalysis
         : [],
-      source: dataObj.source === 'gemini' ? 'gemini' : 'fallback',
+
+      overallObservation: dataObj.overallObservation || '',
+
+      focus: Array.isArray(dataObj.focus)
+        ? dataObj.focus
+        : [],
+
+      source: dataObj.source === 'gemini'
+        ? 'gemini'
+        : 'fallback',
+
       sourceHash: currentHash,
       sourceUpdatedAt: new Date().toISOString(),
       generatedAt: new Date().toISOString(),
@@ -1095,16 +1105,35 @@ async function triggerDailySummaryGeneration(date, healthEntry) {
       const storageKey = `saathi_ai_daily_${uid}_${date}`
       const fallbackPayload = {
         date,
-        summary: `Daily check-in recorded for ${date}. Keeping consistent logs helps identify trends in your comfort, energy, and cycle patterns over time.`,
-        keyPoints: [
-          healthEntry?.periodStatus && healthEntry.periodStatus !== 'none'
+
+        summary:
+          'Your health check-in has been recorded. Saathi will use your logged information to help you understand your wellbeing over time.',
+
+        highlights: [
+          healthEntry?.periodStatus
             ? `Period status: ${healthEntry.periodStatus}`
             : 'Check-in logged for today',
+
           healthEntry?.pain != null && healthEntry.pain !== ''
             ? `Pain level recorded: ${healthEntry.pain}/10`
-            : 'Wellness check-in completed',
-          healthEntry?.energy ? `Energy level noted: ${healthEntry.energy}` : 'Rest and hydration prioritized',
+            : 'Pain was not recorded',
+
+          healthEntry?.energy
+            ? `Energy level noted: ${healthEntry.energy}`
+            : 'Energy was not recorded',
+
+          healthEntry?.sleep
+            ? `Sleep recorded: ${healthEntry.sleep} hours`
+            : 'Sleep was not recorded',
         ],
+
+        observations: [],
+
+        focus: [
+          'Continue tracking your wellbeing consistently.',
+          'Pay attention to changes in sleep, energy, pain, and symptoms.',
+        ],
+
         source: 'fallback',
         sourceHash: currentHash,
         sourceUpdatedAt: new Date().toISOString(),
@@ -1322,43 +1351,153 @@ export async function getInsights() {
 }
 
 export async function getRecommendations() {
-  const [cycle, health] =
-    await Promise.all([
-      getCycleData(),
-      getHealthData(),
-    ])
+  const user = requireUser()
 
-  const deterministic =
-    generatePersonalizedRecommendations(
-      health || {},
+  // Get the current data that recommendations depend on
+  const [cycle, health] = await Promise.all([
+    getCycleData(),
+    getHealthData(),
+  ])
+
+  const healthData = health || {}
+
+  /*
+   * Create a deterministic source hash from:
+   * - today's health data
+   * - current cycle information
+   *
+   * If these haven't changed, the existing recommendations
+   * can safely be reused.
+   */
+  const sourceHash = computeHealthEntryHash({
+    ...healthData,
+    __cycleDay: cycle?.cycleDay ?? '',
+    __phaseKey: cycle?.phaseKey ?? '',
+    __cycleLength: cycle?.cycleLength ?? '',
+    __periodLength: cycle?.periodLength ?? '',
+  })
+
+  const reportRef = doc(
+    db,
+    'users',
+    user.uid,
+    'aiReports',
+    'recommendations'
+  )
+
+  /*
+   * ---------------------------------------------------------
+   * 1. CHECK FIREBASE CACHE
+   * ---------------------------------------------------------
+   */
+
+  try {
+    const existingSnap = await getDoc(reportRef)
+
+    if (existingSnap.exists()) {
+      const existingData = existingSnap.data()
+
+      if (
+        existingData.sourceHash === sourceHash &&
+        Array.isArray(existingData.categories) &&
+        existingData.categories.length > 0
+      ) {
+        console.log(
+          '[AI Recommendations] Source data unchanged. Using cached recommendations.'
+        )
+
+        return {
+          phaseKey: cycle.phaseKey,
+          categories: existingData.categories,
+        }
+      }
+    }
+  } catch (error) {
+    console.warn(
+      '[AI Recommendations] Firebase cache read failed:',
+      error?.message
     )
+  }
+
+  /*
+   * ---------------------------------------------------------
+   * 2. DATA CHANGED → GENERATE NEW RECOMMENDATIONS
+   * ---------------------------------------------------------
+   */
+
+  console.log(
+    '[AI Recommendations] Health/cycle data changed. Generating new recommendations.'
+  )
 
   const categoryConfigs = [
-    { key: 'nutrition', icon: 'Apple', title: 'Nutrition', color: 'rose' },
-    { key: 'exercise', icon: 'Dumbbell', title: 'Movement', color: 'plum' },
-    { key: 'painManagement', icon: 'Thermometer', title: 'Pain Management', color: 'rose' },
-    { key: 'selfCare', icon: 'Sparkles', title: 'Self-Care', color: 'teal' },
-    { key: 'hygiene', icon: 'ShieldCheck', title: 'Menstrual Hygiene', color: 'teal' },
-    { key: 'mentalWellness', icon: 'HeartHandshake', title: 'Mental Wellness', color: 'rose' },
+    {
+      key: 'nutrition',
+      icon: 'Apple',
+      title: 'Nutrition',
+      color: 'rose',
+    },
+    {
+      key: 'exercise',
+      icon: 'Dumbbell',
+      title: 'Movement',
+      color: 'plum',
+    },
+    {
+      key: 'painManagement',
+      icon: 'Thermometer',
+      title: 'Pain Management',
+      color: 'rose',
+    },
+    {
+      key: 'selfCare',
+      icon: 'Sparkles',
+      title: 'Self-Care',
+      color: 'teal',
+    },
+    {
+      key: 'hygiene',
+      icon: 'ShieldCheck',
+      title: 'Menstrual Hygiene',
+      color: 'teal',
+    },
+    {
+      key: 'mentalWellness',
+      icon: 'HeartHandshake',
+      title: 'Mental Wellness',
+      color: 'rose',
+    },
   ]
 
-  // Try to enhance categories with Gemini server-side recommendations
+  /*
+   * Generate the six categories.
+   *
+   * This happens ONLY when the cached sourceHash does not
+   * match the current health/cycle data.
+   */
+  const deterministic = generatePersonalizedRecommendations(
+    healthData
+  )
+
   const enrichedCategories = await Promise.all(
     categoryConfigs.map(async (cfg) => {
       const fallback = deterministic[cfg.key] || {}
+
       try {
         const res = await fetch('/api/ai/recommendation', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+          },
           body: JSON.stringify({
             category: cfg.key,
-            healthData: health || {},
-            cycleData: cycle || {},
+            healthData,
+            cycleData: cycle,
           }),
         })
 
         if (res.ok) {
           const aiRec = await res.json()
+
           if (aiRec && aiRec.summary) {
             return {
               key: cfg.key,
@@ -1366,13 +1505,24 @@ export async function getRecommendations() {
               title: cfg.title,
               color: cfg.color,
               tip: aiRec.summary,
-              insights: Array.isArray(aiRec.insights) && aiRec.insights.length > 0 ? aiRec.insights : fallback.insights || [],
-              actions: Array.isArray(aiRec.actions) && aiRec.actions.length > 0 ? aiRec.actions : fallback.actions || [],
+              insights:
+                Array.isArray(aiRec.insights) &&
+                aiRec.insights.length > 0
+                  ? aiRec.insights
+                  : fallback.insights || [],
+              actions:
+                Array.isArray(aiRec.actions) &&
+                aiRec.actions.length > 0
+                  ? aiRec.actions
+                  : fallback.actions || [],
             }
           }
         }
-      } catch (err) {
-        // Silently fall back to deterministic recommendation
+      } catch (error) {
+        console.warn(
+          `[AI Recommendation] ${cfg.key} failed:`,
+          error?.message
+        )
       }
 
       return {
@@ -1386,6 +1536,32 @@ export async function getRecommendations() {
       }
     })
   )
+
+  /*
+   * ---------------------------------------------------------
+   * 3. SAVE NEW RECOMMENDATIONS TO FIREBASE
+   * ---------------------------------------------------------
+   */
+
+  const payload = {
+    sourceHash,
+    categories: enrichedCategories,
+    phaseKey: cycle.phaseKey,
+    generatedAt: new Date().toISOString(),
+  }
+
+  try {
+    await setDoc(reportRef, payload, { merge: true })
+
+    console.log(
+      '[AI Recommendations] Saved to Firebase successfully.'
+    )
+  } catch (error) {
+    console.warn(
+      '[AI Recommendations] Firebase save failed:',
+      error?.message
+    )
+  }
 
   return {
     phaseKey: cycle.phaseKey,
