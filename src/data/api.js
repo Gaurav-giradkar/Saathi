@@ -937,10 +937,319 @@ export async function saveHealthLog(
 
   await publishSharedProjection(user.uid)
 
+  // Asynchronously generate/refresh today's Daily AI summary without blocking health log save
+  triggerDailySummaryGeneration(date, normalisedEntry).catch((err) => {
+    console.warn('[AI Daily Summary Generation Non-Blocking Error]:', err?.message)
+  })
+
   return {
     ...normalisedEntry,
     date,
   }
+}
+
+/* ==========================================================================
+   AI HELPER & REPORT GENERATION FUNCTIONS
+========================================================================== */
+
+/**
+ * Deterministic hash to detect if source health entry changed
+ */
+function computeHealthEntryHash(entry = {}) {
+  const keys = [
+    'periodStatus',
+    'bleeding',
+    'pain',
+    'energy',
+    'mood',
+    'moods',
+    'sleep',
+    'sleepQuality',
+    'waterLiters',
+    'symptoms',
+    'meals',
+    'appetite',
+    'cravings',
+    'painLocations',
+    'painTypes',
+    'relief',
+    'exerciseMinutes',
+    'notes',
+  ]
+  const values = keys.map((k) => JSON.stringify(entry[k] ?? ''))
+  return values.join('|')
+}
+
+/**
+ * Trigger Daily AI summary generation asynchronously if data changed
+ */
+async function triggerDailySummaryGeneration(date, healthEntry) {
+  try {
+    const uid = auth?.currentUser?.uid || 'local_user'
+    const currentHash = computeHealthEntryHash(healthEntry)
+    const storageKey = `saathi_ai_daily_${uid}_${date}`
+
+    // Check existing Firestore document if db is available
+    if (db && auth?.currentUser) {
+      try {
+        const reportRef = doc(db, 'users', uid, 'aiReports', `daily-${date}`)
+        const existingSnap = await getDoc(reportRef).catch(() => null)
+        if (existingSnap && existingSnap.exists()) {
+          const existingData = existingSnap.data()
+          if (existingData.sourceHash === currentHash && existingData.summary) {
+            console.log('[AI Daily Summary] Source data unchanged. Skipping regeneration.')
+            return
+          }
+        }
+      } catch (e) {
+        // Continue to generate
+      }
+    } else {
+      // Check localStorage for staleness
+      try {
+        const cachedRaw = localStorage.getItem(storageKey)
+        if (cachedRaw) {
+          const cached = JSON.parse(cachedRaw)
+          if (cached.sourceHash === currentHash && cached.summary) {
+            console.log('[AI Daily Summary] Local source data unchanged. Skipping regeneration.')
+            return
+          }
+        }
+      } catch (e) {}
+    }
+
+    const cycle = await getCycleData().catch(() => ({}))
+
+    const res = await fetch('/api/ai/daily-summary', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        date,
+        cycle,
+        health: healthEntry,
+      }),
+    })
+
+    if (!res.ok) {
+      throw new Error(`AI daily summary server returned HTTP ${res.status}`)
+    }
+
+    const aiResult = await res.json()
+    const dataObj = aiResult?.data || aiResult || {}
+
+    const docPayload = {
+      date,
+      summary: dataObj.summary || '',
+      keyPoints: Array.isArray(dataObj.keyPoints)
+        ? dataObj.keyPoints
+        : Array.isArray(dataObj.highlights)
+        ? dataObj.highlights
+        : [],
+      sourceHash: currentHash,
+      sourceUpdatedAt: new Date().toISOString(),
+      generatedAt: new Date().toISOString(),
+    }
+
+    console.log('[AI Daily Summary Generated Shape]:', {
+      date,
+      hasSummary: Boolean(docPayload.summary),
+      keyPointsCount: docPayload.keyPoints.length,
+    })
+
+    // Save to localStorage for instant local access
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(docPayload))
+    } catch (e) {}
+
+    // Save to Firestore if user & db available
+    if (db && auth?.currentUser) {
+      try {
+        const reportRef = doc(db, 'users', uid, 'aiReports', `daily-${date}`)
+        await setDoc(reportRef, docPayload, { merge: true })
+        console.log('[AI Daily Summary] Stored in Firestore successfully for', date)
+      } catch (fsErr) {
+        console.warn('[AI Daily Summary Firestore Write Error]:', fsErr?.message)
+      }
+    }
+  } catch (error) {
+    console.warn('[AI Daily Summary Async Error]:', error?.message)
+  }
+}
+
+/**
+ * Get cached Daily AI Summary
+ */
+export async function getDailyAISummary(date) {
+  const uid = auth?.currentUser?.uid || 'local_user'
+  const storageKey = `saathi_ai_daily_${uid}_${date}`
+
+  if (db && auth?.currentUser) {
+    try {
+      const reportRef = doc(db, 'users', uid, 'aiReports', `daily-${date}`)
+      const snap = await getDoc(reportRef)
+      if (snap.exists() && snap.data()?.summary) {
+        const data = snap.data()
+        try {
+          localStorage.setItem(storageKey, JSON.stringify(data))
+        } catch (e) {}
+        return data
+      }
+    } catch (fsErr) {
+      console.warn('[AI Daily Summary Firestore Read Warning]:', fsErr?.message)
+    }
+  }
+
+  // Fallback to localStorage
+  try {
+    const raw = localStorage.getItem(storageKey)
+    if (raw) {
+      return JSON.parse(raw)
+    }
+  } catch (e) {}
+
+  return null
+}
+
+/**
+ * Get cached Monthly AI Summary
+ */
+export async function getMonthlyAISummary(month) {
+  const uid = auth?.currentUser?.uid || 'local_user'
+  const storageKey = `saathi_ai_monthly_${uid}_${month}`
+
+  if (db && auth?.currentUser) {
+    try {
+      const reportRef = doc(db, 'users', uid, 'aiReports', `monthly-${month}`)
+      const snap = await getDoc(reportRef)
+      if (snap.exists() && snap.data()?.summary) {
+        const data = snap.data()
+        console.log('[AI Monthly Summary Loaded from Firestore]:', {
+          month,
+          hasSummary: Boolean(data.summary),
+          keyPointsCount: data.keyPoints?.length || 0,
+        })
+        try {
+          localStorage.setItem(storageKey, JSON.stringify(data))
+        } catch (e) {}
+        return data
+      }
+    } catch (fsErr) {
+      console.warn('[AI Monthly Summary Firestore Read Warning]:', fsErr?.message)
+    }
+  }
+
+  // Fallback to localStorage
+  try {
+    const raw = localStorage.getItem(storageKey)
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      console.log('[AI Monthly Summary Loaded from Local Storage]:', {
+        month,
+        hasSummary: Boolean(parsed.summary),
+      })
+      return parsed
+    }
+  } catch (e) {}
+
+  return null
+}
+
+/**
+ * Generate Monthly AI Summary explicitly upon user click
+ */
+export async function generateMonthlyAISummary(month, { cycle = {}, entries = [], trends = {} } = {}) {
+  const uid = auth?.currentUser?.uid || 'local_user'
+  const storageKey = `saathi_ai_monthly_${uid}_${month}`
+
+  console.log('[AI Monthly Summary] Requesting generation for month:', month)
+
+  const res = await fetch('/api/ai/monthly-summary', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      month,
+      cycle,
+      entries,
+      trends,
+    }),
+  })
+
+  if (!res.ok) {
+    throw new Error(`Failed to generate monthly summary: HTTP ${res.status}`)
+  }
+
+  const aiResult = await res.json()
+  const dataObj = aiResult?.data || aiResult || {}
+
+  const docPayload = {
+    month,
+    summary: dataObj.summary || '',
+    keyPoints: Array.isArray(dataObj.keyPoints)
+      ? dataObj.keyPoints
+      : Array.isArray(dataObj.highlights)
+      ? dataObj.highlights
+      : [],
+    patterns: Array.isArray(dataObj.patterns)
+      ? dataObj.patterns
+      : Array.isArray(dataObj.trends)
+      ? dataObj.trends
+      : [],
+    notableChanges: Array.isArray(dataObj.notableChanges)
+      ? dataObj.notableChanges
+      : Array.isArray(dataObj.changes)
+      ? dataObj.changes
+      : [],
+    generatedAt: new Date().toISOString(),
+  }
+
+  console.log('[AI Monthly Summary Response Shape]:', {
+    month,
+    hasSummary: Boolean(docPayload.summary),
+    keyPointsCount: docPayload.keyPoints.length,
+    patternsCount: docPayload.patterns.length,
+    notableChangesCount: docPayload.notableChanges.length,
+  })
+
+  // Save to localStorage for instant local resilience
+  try {
+    localStorage.setItem(storageKey, JSON.stringify(docPayload))
+  } catch (e) {}
+
+  // Save to Firestore if available
+  if (db && auth?.currentUser) {
+    try {
+      const reportRef = doc(db, 'users', uid, 'aiReports', `monthly-${month}`)
+      await setDoc(reportRef, docPayload, { merge: true })
+      console.log('[AI Monthly Summary] Persisted to Firestore successfully for', month)
+    } catch (fsErr) {
+      console.warn('[AI Monthly Summary Firestore Write Warning]:', fsErr?.message)
+    }
+  }
+
+  return docPayload
+}
+
+/**
+ * Send AI Chat message (User or Supporter)
+ */
+export async function sendAIChatMessage({ message, context = {}, role = 'user', permissions = {}, isConnected = false }) {
+  const res = await fetch('/api/ai/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      message,
+      context,
+      role,
+      permissions,
+      isConnected,
+    }),
+  })
+
+  if (!res.ok) {
+    throw new Error(`AI Chat service returned HTTP ${res.status}`)
+  }
+
+  return await res.json()
 }
 
 /* ==========================================================================
@@ -970,93 +1279,68 @@ export async function getRecommendations() {
       getHealthData(),
     ])
 
-  const recommendations =
+  const deterministic =
     generatePersonalizedRecommendations(
       health || {},
     )
 
+  const categoryConfigs = [
+    { key: 'nutrition', icon: 'Apple', title: 'Nutrition', color: 'rose' },
+    { key: 'exercise', icon: 'Dumbbell', title: 'Movement', color: 'plum' },
+    { key: 'painManagement', icon: 'Thermometer', title: 'Pain Management', color: 'rose' },
+    { key: 'selfCare', icon: 'Sparkles', title: 'Self-Care', color: 'teal' },
+    { key: 'hygiene', icon: 'ShieldCheck', title: 'Menstrual Hygiene', color: 'teal' },
+    { key: 'mentalWellness', icon: 'HeartHandshake', title: 'Mental Wellness', color: 'rose' },
+  ]
+
+  // Try to enhance categories with Gemini server-side recommendations
+  const enrichedCategories = await Promise.all(
+    categoryConfigs.map(async (cfg) => {
+      const fallback = deterministic[cfg.key] || {}
+      try {
+        const res = await fetch('/api/ai/recommendation', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            category: cfg.key,
+            healthData: health || {},
+            cycleData: cycle || {},
+          }),
+        })
+
+        if (res.ok) {
+          const aiRec = await res.json()
+          if (aiRec && aiRec.summary) {
+            return {
+              key: cfg.key,
+              icon: cfg.icon,
+              title: cfg.title,
+              color: cfg.color,
+              tip: aiRec.summary,
+              insights: Array.isArray(aiRec.insights) && aiRec.insights.length > 0 ? aiRec.insights : fallback.insights || [],
+              actions: Array.isArray(aiRec.actions) && aiRec.actions.length > 0 ? aiRec.actions : fallback.actions || [],
+            }
+          }
+        }
+      } catch (err) {
+        // Silently fall back to deterministic recommendation
+      }
+
+      return {
+        key: cfg.key,
+        icon: cfg.icon,
+        title: cfg.title,
+        color: cfg.color,
+        tip: fallback.summary || '',
+        insights: fallback.insights || [],
+        actions: fallback.actions || [],
+      }
+    })
+  )
+
   return {
     phaseKey: cycle.phaseKey,
-
-    categories: [
-      {
-        key: 'nutrition',
-        icon: '🥗',
-        title: 'Nutrition',
-        color: 'rose',
-        tip:
-          recommendations.nutrition.summary,
-        insights:
-          recommendations.nutrition.insights,
-        actions:
-          recommendations.nutrition.actions,
-      },
-
-      {
-        key: 'exercise',
-        icon: '🏃',
-        title: 'Movement',
-        color: 'plum',
-        tip:
-          recommendations.exercise.summary,
-        insights:
-          recommendations.exercise.insights,
-        actions:
-          recommendations.exercise.actions,
-      },
-
-      {
-        key: 'painManagement',
-        icon: '🌡️',
-        title: 'Pain Management',
-        color: 'rose',
-        tip:
-          recommendations.painManagement.summary,
-        insights:
-          recommendations.painManagement.insights,
-        actions:
-          recommendations.painManagement.actions,
-      },
-
-      {
-        key: 'selfCare',
-        icon: '✨',
-        title: 'Self-Care',
-        color: 'teal',
-        tip:
-          recommendations.selfCare.summary,
-        insights:
-          recommendations.selfCare.insights,
-        actions:
-          recommendations.selfCare.actions,
-      },
-
-      {
-        key: 'hygiene',
-        icon: '🩷',
-        title: 'Menstrual Hygiene',
-        color: 'teal',
-        tip:
-          recommendations.hygiene.summary,
-        insights:
-          recommendations.hygiene.insights,
-        actions:
-          recommendations.hygiene.actions,
-      },
-
-      {
-        key: 'mentalWellness',
-        icon: '💗',
-        title: 'Mental Wellness',
-        color: 'rose',
-        tip:
-          recommendations.mentalWellness.summary,
-        insights:
-          recommendations.mentalWellness.insights,
-        actions:
-          recommendations.mentalWellness.actions,
-      },
-    ],
+    categories: enrichedCategories,
   }
 }
 

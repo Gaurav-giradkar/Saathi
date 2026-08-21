@@ -25,7 +25,7 @@ import Card from '../components/common/Card.jsx'
 import InsightCard from '../components/common/InsightCard.jsx'
 import PhaseBadge from '../components/common/PhaseBadge.jsx'
 import Button from '../components/common/Button.jsx'
-import { getSupporterData } from '../data/api.js'
+import { getSupporterData, sendAIChatMessage } from '../data/api.js'
 import { PHASES } from '../data/mockData.js'
 
 function getMockResponse(message) {
@@ -113,7 +113,7 @@ function getMockResponse(message) {
   }
 
   return (
-    'That is a good question. Saathi AI is currently running in frontend preview mode. Once the AI service is connected, this chat will generate dynamic answers to general, educational, and supporter questions.'
+    'I can help answer questions about menstrual health, cycles, and how to offer practical and emotional support.'
   )
 }
 
@@ -156,6 +156,44 @@ export default function SupporterAIInsights() {
     loadData()
   }, [])
 
+  const executeChatRequest = async (text) => {
+    const isConn =
+      data?.connection?.status === 'active' ||
+      data?.connection?.status === 'connected'
+
+    const perms = data?.permissions || data?.shared?.permissions || {}
+    const rawShared = data?.shared || {}
+
+    // Pre-filter context client-side (Server also independently enforces permissions)
+    const contextToSend = {}
+    if (isConn) {
+      if (perms.periodStatus && rawShared.periodStatus) contextToSend.periodStatus = rawShared.periodStatus
+      if (perms.expectedPeriod && rawShared.expectedPeriod) contextToSend.expectedPeriod = rawShared.expectedPeriod
+      if (perms.painLevel && rawShared.painLevel != null) contextToSend.painLevel = rawShared.painLevel
+      if (perms.symptoms && Array.isArray(rawShared.symptoms)) contextToSend.symptoms = rawShared.symptoms
+      if (perms.mood && rawShared.mood) contextToSend.mood = rawShared.mood
+      if (perms.dietNutrition && rawShared.dietNutrition) contextToSend.dietNutrition = rawShared.dietNutrition
+      if (perms.sleep && rawShared.sleep) contextToSend.sleep = rawShared.sleep
+      if (perms.medicalInfo && rawShared.medicalInfo) contextToSend.medicalInfo = rawShared.medicalInfo
+      if (perms.energy && rawShared.energy) contextToSend.energy = rawShared.energy
+    }
+
+    try {
+      const result = await sendAIChatMessage({
+        message: text,
+        context: contextToSend,
+        role: 'supporter',
+        permissions: perms,
+        isConnected: isConn,
+      })
+
+      return result.response || getFallbackAnswer(text) || getMockResponse(text)
+    } catch (err) {
+      console.warn('[Supporter AI Chat Request Failed, using fallback]:', err?.message)
+      return getFallbackAnswer(text) || getMockResponse(text)
+    }
+  }
+
   const handleSend = async (event) => {
     event.preventDefault()
 
@@ -179,14 +217,7 @@ export default function SupporterAIInsights() {
     setInput('')
     setSending(true)
 
-    // Temporary frontend-only AI response.
-    await new Promise((resolve) =>
-      setTimeout(resolve, 500),
-    )
-
-    const response =
-      getFallbackAnswer(text) ||
-      getMockResponse(text)
+    const response = await executeChatRequest(text)
 
     const assistantMessage = {
       id: `assistant-${Date.now()}`,
@@ -203,43 +234,37 @@ export default function SupporterAIInsights() {
   }
 
   const handleSuggestedQuestion = async (question) => {
-  if (sending) return
+    if (sending) return
 
-  const userMessage = {
-    id: `user-${Date.now()}`,
-    role: 'user',
-    text: question,
+    const userMessage = {
+      id: `user-${Date.now()}`,
+      role: 'user',
+      text: question,
+    }
+
+    setMessages((current) => [
+      ...current,
+      userMessage,
+    ])
+
+    setInput('')
+    setSending(true)
+
+    const response = await executeChatRequest(question)
+
+    const assistantMessage = {
+      id: `assistant-${Date.now()}`,
+      role: 'assistant',
+      text: response,
+    }
+
+    setMessages((current) => [
+      ...current,
+      assistantMessage,
+    ])
+
+    setSending(false)
   }
-
-  setMessages((current) => [
-    ...current,
-    userMessage,
-  ])
-
-  setInput('')
-  setSending(true)
-
-  await new Promise((resolve) =>
-    setTimeout(resolve, 500),
-  )
-
-  const response =
-    getFallbackAnswer(question) ||
-    getMockResponse(question)
-
-  const assistantMessage = {
-    id: `assistant-${Date.now()}`,
-    role: 'assistant',
-    text: response,
-  }
-
-  setMessages((current) => [
-    ...current,
-    assistantMessage,
-  ])
-
-  setSending(false)
-}
 
   if (loading) {
     return (

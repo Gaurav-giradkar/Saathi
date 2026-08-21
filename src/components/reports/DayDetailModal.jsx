@@ -1,11 +1,28 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import Modal from '../common/Modal.jsx'
 import Button from '../common/Button.jsx'
 import {
   HeartPulse, Activity, Moon, Droplets, Dumbbell, Utensils, Sparkles, Smile, ShieldCheck, FileText, CheckCircle2,
 } from 'lucide-react'
+import { getDailyAISummary } from '../../data/api.js'
 
 export default function DayDetailModal({ log, cycleInfo, open, onClose }) {
+  const [dailySummary, setDailySummary] = useState(null)
+  const [loadingSummary, setLoadingSummary] = useState(false)
+
+  useEffect(() => {
+    if (log?.date && open) {
+      setLoadingSummary(true)
+      getDailyAISummary(log.date)
+        .then((res) => setDailySummary(res))
+        .catch(() => setDailySummary(null))
+        .finally(() => setLoadingSummary(false))
+    } else {
+      setDailySummary(null)
+      setLoadingSummary(false)
+    }
+  }, [log?.date, open])
+
   if (!log) return null
 
   const formattedDate = log.date
@@ -30,6 +47,31 @@ export default function DayDetailModal({ log, cycleInfo, open, onClose }) {
   return (
     <Modal open={open} onClose={onClose} title={formattedDate} size="lg">
       <div className="flex flex-col gap-4 text-sm">
+
+        {/* Stored Daily AI Summary */}
+        {loadingSummary ? (
+          <div className="p-3.5 rounded-xl bg-gradient-to-br from-rose-50/50 to-surface border border-rose-100 flex items-center gap-2.5 text-xs text-ink-500 animate-pulse">
+            <Sparkles size={15} className="text-rose-500 animate-spin" />
+            <span>Daily AI summary is being prepared…</span>
+          </div>
+        ) : dailySummary && dailySummary.summary ? (
+          <div className="p-4 rounded-xl bg-gradient-to-br from-surface to-rose-50/40 border border-rose-200/80 shadow-soft">
+            <div className="flex items-center gap-2 text-rose-700 font-semibold text-xs uppercase tracking-wider mb-2">
+              <Sparkles size={15} />
+              <span>Saathi Daily AI Summary</span>
+            </div>
+            <p className="text-sm text-ink-800 leading-relaxed font-medium">
+              {dailySummary.summary}
+            </p>
+            {Array.isArray(dailySummary.keyPoints) && dailySummary.keyPoints.length > 0 && (
+              <ul className="mt-2.5 space-y-1 text-xs text-ink-600 list-disc list-inside">
+                {dailySummary.keyPoints.map((pt, idx) => (
+                  <li key={idx}>{pt}</li>
+                ))}
+              </ul>
+            )}
+          </div>
+        ) : null}
 
         {/* Symptoms Section */}
         {symptoms.length > 0 && (

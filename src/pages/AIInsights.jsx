@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { Sparkles, Send, Activity, Moon, HeartPulse } from 'lucide-react'
 
 import Card from '../components/common/Card.jsx'
-import { getInsights } from '../data/api.js'
+import { getCycleData, getHealthData, getInsights, sendAIChatMessage } from '../data/api.js'
 
 const COMMON_QUESTIONS = [
   'What phase am I in?',
@@ -51,13 +51,16 @@ function SnapshotItem({ icon: Icon, label, value }) {
 
 export default function AIInsights() {
   const [data, setData] = useState(null)
+  const [healthData, setHealthData] = useState(null)
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
+  const [sending, setSending] = useState(false)
 
   useEffect(() => {
-    getInsights()
-      .then((result) => {
+    Promise.all([getInsights(), getHealthData().catch(() => null)])
+      .then(([result, health]) => {
         setData(result)
+        setHealthData(health)
 
         setMessages([
           {
@@ -98,80 +101,19 @@ export default function AIInsights() {
         'Current phase'
 
   const pain =
+    healthData?.pain ??
     data.today?.pain ??
     data.pain ??
     'Not logged'
 
   const sleep =
+    healthData?.sleep ??
     data.today?.sleep ??
     data.sleep ??
     'Not logged'
 
-  const answerQuestion = (question) => {
-    let response = ''
-
-    if (question === 'What phase am I in?') {
-      response = `You're currently in your ${phase}.`
-    }
-
-    if (question === 'When is my next period?') {
-      if (cycleInfo.nextPeriodDate) {
-        const date = new Date(cycleInfo.nextPeriodDate)
-
-        const formattedDate = date.toLocaleDateString('en-IN', {
-          day: 'numeric',
-          month: 'long',
-        })
-
-        response = cycleInfo.daysUntilNextPeriod != null
-          ? `Your next period is currently expected in ${cycleInfo.daysUntilNextPeriod} days, around ${formattedDate}.`
-          : `Your next period is currently expected around ${formattedDate}.`
-      } else {
-        response =
-          'I need more cycle information before I can estimate your next period.'
-      }
-    }
-
-    if (question === 'How am I doing today?') {
-      if (data.insights?.length) {
-        response =
-          "Based on your recent check-ins, here's what I've noticed:\n\n" +
-          data.insights
-            .slice(0, 2)
-            .map((ins) => `${ins.title}: ${ins.body}`)
-            .join('\n\n')
-      } else {
-        response =
-          "I don't have enough recent check-ins to identify a meaningful pattern yet."
-      }
-    }
-
-    if (question === 'What patterns do you notice?') {
-      if (data.insights?.length) {
-        response = data.insights
-          .slice(0, 3)
-          .map((ins) => `${ins.title}\n${ins.body}`)
-          .join('\n\n')
-      } else {
-        response =
-          "I need more daily check-ins before I can identify meaningful patterns."
-      }
-    }
-
-    if (question === 'What should I focus on today?') {
-      response =
-        'Keep logging your energy, sleep, hydration, mood, pain, and symptoms. Over time, Saathi can use these patterns to give you more personalized recommendations.'
-    }
-
-    if (question === 'What changed this cycle?') {
-      response =
-        'Once enough historical data is available, Saathi can compare this cycle with previous cycles across pain, energy, sleep, mood, bleeding, and symptoms.'
-    }
-
-    if (!response) {
-      response =
-        "I can help you understand your cycle and wellbeing using the information you've logged."
-    }
+  const answerQuestion = async (question) => {
+    if (sending) return
 
     setMessages((current) => [
       ...current,
@@ -179,17 +121,56 @@ export default function AIInsights() {
         role: 'user',
         content: question,
       },
-      {
-        role: 'assistant',
-        content: response,
-      },
     ])
+
+    setSending(true)
+
+    try {
+      const context = {
+        cycleDay,
+        phase,
+        nextPeriodDate: cycleInfo.nextPeriodDate,
+        daysUntilNextPeriod: cycleInfo.daysUntilNextPeriod,
+        periodStatus: healthData?.periodStatus || 'none',
+        pain: healthData?.pain ?? null,
+        mood: healthData?.mood || healthData?.moods || null,
+        energy: healthData?.energy || null,
+        sleep: healthData?.sleep ?? null,
+        symptoms: healthData?.symptoms || [],
+        waterLiters: healthData?.waterLiters ?? null,
+      }
+
+      const res = await sendAIChatMessage({
+        message: question,
+        context,
+        role: 'user',
+      })
+
+      setMessages((current) => [
+        ...current,
+        {
+          role: 'assistant',
+          content: res.response || "I'm here to support your menstrual wellbeing. How else can I help?",
+        },
+      ])
+    } catch (err) {
+      console.warn('[AI User Chat Fallback]:', err?.message)
+      setMessages((current) => [
+        ...current,
+        {
+          role: 'assistant',
+          content: "I'm currently unable to reach the AI service, but your logged data remains safely recorded.",
+        },
+      ])
+    } finally {
+      setSending(false)
+    }
   }
 
   const handleSend = () => {
     const question = input.trim()
 
-    if (!question) return
+    if (!question || sending) return
 
     setInput('')
 

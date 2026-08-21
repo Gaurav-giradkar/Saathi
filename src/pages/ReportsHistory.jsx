@@ -1,17 +1,43 @@
+import React, { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import Card from '../components/common/Card.jsx'
-import { CalendarDays, Download, Printer, ChevronRight, Activity, HeartPulse,
-  Sparkles, Smile, Droplets, Dumbbell, Moon, Info, HelpCircle, ArrowRight,
-  TrendingUp, FileText, CheckCircle2, ChevronDown
+
+import {
+  CalendarDays,
+  Download,
+  Printer,
+  ChevronRight,
+  Activity,
+  HeartPulse,
+  Sparkles,
+  Smile,
+  Droplets,
+  Dumbbell,
+  Moon,
+  Info,
+  HelpCircle,
+  ArrowRight,
+  TrendingUp,
+  FileText,
+  CheckCircle2,
+  ChevronDown,
+  RefreshCw,
 } from 'lucide-react'
+
+import Card from '../components/common/Card.jsx'
 import Button from '../components/common/Button.jsx'
 import EmptyState from '../components/common/EmptyState.jsx'
-import { CycleLengthChart } from '../components/charts/TrendChart.jsx'
 import DayDetailModal from '../components/reports/DayDetailModal.jsx'
-import { getReportsData } from '../data/api.js'
+import { CycleLengthChart } from '../components/charts/TrendChart.jsx'
+
+import {
+  generateMonthlyAISummary,
+  getMonthlyAISummary,
+  getDailyAISummary,
+  getReportsData,
+} from '../data/api.js'
+
 import { useApp } from '../context/AppContext.jsx'
 import { MOOD_OPTIONS, PHASES } from '../data/mockData.js'
-import React, { useEffect, useMemo, useState } from 'react'
 
 import {
   getAvailableReportMonths,
@@ -35,6 +61,10 @@ export default function ReportsHistory() {
   const [symptomFilter, setSymptomFilter] = useState('All')
   const [selectedDayLog, setSelectedDayLog] = useState(null)
   const [dayModalOpen, setDayModalOpen] = useState(false)
+  const [monthlyAiSummary, setMonthlyAiSummary] = useState(null)
+  const [generatingMonthly, setGeneratingMonthly] = useState(false)
+  const [dailyAiSummary, setDailyAiSummary] = useState(null)
+  const [loadingDailySummary, setLoadingDailySummary] = useState(true)
 
   const { showToast } = useApp()
   const navigate = useNavigate()
@@ -55,6 +85,78 @@ export default function ReportsHistory() {
       })
   }, [])
 
+    // Check for cached Monthly AI Summary (Strictly NO automatic generation on load)
+    useEffect(() => {
+      if (selectedMonth) {
+        getMonthlyAISummary(selectedMonth)
+          .then((res) => {
+            console.log('[Reports] Loaded cached monthly AI summary for', selectedMonth, ':', {
+              hasSummary: Boolean(res?.summary),
+              keyPointsCount: res?.keyPoints?.length || 0,
+            })
+            setMonthlyAiSummary(res)
+          })
+          .catch(() => setMonthlyAiSummary(null))
+      }
+    }, [selectedMonth])
+
+  // Load today's cached Daily AI Summary (no automatic Gemini generation here)
+  useEffect(() => {
+    const today = new Date().toISOString().slice(0, 10)
+
+    setLoadingDailySummary(true)
+
+    getDailyAISummary(today)
+      .then((res) => {
+        console.log('[Reports] Loaded cached daily AI summary:', {
+          date: today,
+          hasSummary: Boolean(res?.summary),
+          keyPointsCount: res?.keyPoints?.length || 0,
+        })
+
+        setDailyAiSummary(res || null)
+      })
+      .catch((err) => {
+        console.error('[Reports] Failed to load daily AI summary:', err)
+        setDailyAiSummary(null)
+      })
+      .finally(() => {
+        setLoadingDailySummary(false)
+      })
+  }, [])
+
+  // User-triggered generator
+  const handleGenerateMonthlySummary = async () => {
+    setGeneratingMonthly(true)
+    try {
+      console.log('[Reports] Triggering monthly AI summary generation for', selectedMonth)
+      const result = await generateMonthlyAISummary(selectedMonth, {
+        cycle: data?.cycleInfo || {},
+        entries: monthLogs,
+        trends: {
+          snapshot,
+          symptomsBreakdown,
+          comparison,
+          patternsResult,
+          reliefSummary,
+        },
+      })
+      console.log('[Reports] Received generated monthly AI summary:', {
+        month: selectedMonth,
+        hasSummary: Boolean(result?.summary),
+        keyPointsCount: result?.keyPoints?.length || 0,
+        patternsCount: result?.patterns?.length || 0,
+      })
+      setMonthlyAiSummary(result)
+      showToast('Monthly AI summary updated', 'success')
+    } catch (err) {
+      console.error('[Reports] Error generating monthly summary:', err)
+      showToast('Could not generate AI summary. Showing local analysis.', 'error')
+    } finally {
+      setGeneratingMonthly(false)
+    }
+  }
+
   // Month options (at least 12 previous months)
   const availableMonths = useMemo(() => {
     return getAvailableReportMonths(new Date(), data?.logs || [], data?.history || [])
@@ -74,6 +176,15 @@ export default function ReportsHistory() {
     return filterLogsByMonth(data?.logs || [], selectedMonth)
   }, [data, selectedMonth])
 
+  const todayDate = useMemo(
+    () => new Date().toISOString().slice(0, 10),
+    []
+  )
+
+  const todayLog = useMemo(
+    () => (data?.logs || []).find((log) => log.date === todayDate),
+    [data, todayDate]
+  )
   // Monthly Snapshot metrics (6 compact cards)
   const snapshot = useMemo(() => {
     return calculateMonthlySnapshot(monthLogs, data?.cycleInfo || {}, data?.logs || [], selectedMonth)
@@ -677,6 +788,7 @@ export default function ReportsHistory() {
                   </div>
                 ))}
               </div>
+
             ) : (
               <div className="p-6 text-center text-xs text-ink-500 bg-ink-50/40 rounded-xl">
                 {reliefSummary.message}
@@ -690,6 +802,137 @@ export default function ReportsHistory() {
         </Card>
 
       </div>
+
+      {/* ==================================================
+    9. SAATHI'S DAILY SUMMARY
+    ================================================== */}
+    <Card className="!p-6 sm:!p-7 bg-gradient-to-br from-surface to-teal-50/20 border-teal-200/70 shadow-soft">
+      <div className="flex items-start gap-3.5">
+        <div className="w-10 h-10 rounded-2xl bg-teal-500 text-white flex items-center justify-center shrink-0 shadow-soft">
+          <Sparkles size={20} />
+        </div>
+
+        <div className="flex-1">
+          <div className="mb-3">
+            <h2 className="font-display font-bold text-ink-900 text-lg sm:text-xl">
+              Saathi's daily summary
+            </h2>
+
+            <p className="text-ink-500 text-xs sm:text-sm mt-0.5">
+              A personalized summary based on today's Health Tracker.
+            </p>
+          </div>
+
+          {loadingDailySummary ? (
+            <div className="py-7 flex flex-col items-center justify-center gap-2 text-center">
+              <Sparkles size={22} className="text-teal-500 animate-pulse" />
+
+              <p className="text-sm font-medium text-ink-700">
+                Preparing today's summary…
+              </p>
+
+              <p className="text-xs text-ink-400">
+                Saathi is analyzing today's check-in.
+              </p>
+            </div>
+          ) : dailyAiSummary ? (
+            <div className="space-y-4">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wide text-ink-500 mb-1.5">
+                  Today's Summary
+                </p>
+
+                <p className="text-sm sm:text-base text-ink-800 leading-relaxed font-medium">
+                  {dailyAiSummary.summary}
+                </p>
+              </div>
+
+              {Array.isArray(dailyAiSummary.keyPoints) &&
+                dailyAiSummary.keyPoints.length > 0 && (
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-wide text-ink-500 mb-1.5">
+                      Today's Highlights
+                    </p>
+
+                    <ul className="space-y-1 text-xs sm:text-sm text-ink-700 list-disc list-inside">
+                      {dailyAiSummary.keyPoints.map((point, index) => (
+                        <li key={index}>{point}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+                <div className="p-3 rounded-xl bg-surface border border-ink-100">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-ink-400">
+                    Pain
+                  </p>
+                  <p className="text-sm font-bold text-ink-900 mt-1">
+                    {todayLog?.pain != null ? `${todayLog.pain}/10` : '—'}
+                  </p>
+                </div>
+
+                <div className="p-3 rounded-xl bg-surface border border-ink-100">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-ink-400">
+                    Mood
+                  </p>
+                  <p className="text-sm font-bold text-ink-900 mt-1 truncate">
+                    {(() => {
+                      const moodMeta = MOOD_OPTIONS.find(
+                        (m) =>
+                          m.key ===
+                          (todayLog?.mood || todayLog?.moods?.[0])?.toLowerCase()
+                      )
+
+                      return moodMeta
+                        ? `${moodMeta.emoji} ${moodMeta.label}`
+                        : todayLog?.moods?.[0] || '—'
+                    })()}
+                  </p>
+                </div>
+
+                <div className="p-3 rounded-xl bg-surface border border-ink-100">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-ink-400">
+                    Sleep
+                  </p>
+                  <p className="text-sm font-bold text-ink-900 mt-1">
+                    {todayLog?.sleep ? `${todayLog.sleep} hrs` : '—'}
+                  </p>
+                </div>
+
+                <div className="p-3 rounded-xl bg-surface border border-ink-100">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-ink-400">
+                    Symptoms
+                  </p>
+                  <p className="text-sm font-bold text-ink-900 mt-1">
+                    {todayLog
+                      ? (todayLog.symptoms?.length || 0) +
+                        (todayLog.otherSymptom ? 1 : 0)
+                      : '—'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="py-6 text-center bg-ink-50/40 rounded-xl">
+              <p className="text-sm text-ink-600 font-medium">
+                Today's AI summary is not available yet.
+              </p>
+
+              <p className="text-xs text-ink-400 mt-1">
+                Complete and save today's Health Tracker to generate it.
+              </p>
+            </div>
+          )}
+
+          <div className="mt-5 pt-4 border-t border-ink-100/70">
+            <p className="text-[11px] text-ink-400 italic">
+              * This summary is generated from today's logged observations.
+            </p>
+          </div>
+        </div>
+      </div>
+    </Card>
 
       {/* ==================================================
           9. SYMPTOM HISTORY (Clickable Daily Log Rows)
@@ -798,13 +1041,80 @@ export default function ReportsHistory() {
                   A personalized summary for {currentMonthLabel}.
                 </p>
               </div>
+
+              <div className="no-print">
+                {monthlyAiSummary ? (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    icon={RefreshCw}
+                    onClick={handleGenerateMonthlySummary}
+                    disabled={generatingMonthly}
+                  >
+                    {generatingMonthly ? 'Regenerating…' : 'Regenerate Monthly Summary'}
+                  </Button>
+                ) : (
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    icon={Sparkles}
+                    onClick={handleGenerateMonthlySummary}
+                    disabled={generatingMonthly}
+                    className="!bg-rose-500 hover:!bg-rose-600 !text-white"
+                  >
+                    {generatingMonthly ? 'Generating…' : 'Generate Monthly Summary'}
+                  </Button>
+                )}
+              </div>
             </div>
 
-            <div className="text-sm sm:text-base text-ink-800 leading-relaxed mt-3 font-medium space-y-2">
-              {monthlySummaryText.map((line, index) => (
-                <p key={index}>{line}</p>
-              ))}
-            </div>
+            {generatingMonthly ? (
+              <div className="py-8 flex flex-col items-center justify-center gap-2 text-center animate-pulse">
+                <Sparkles size={24} className="text-rose-500 animate-spin" />
+                <p className="text-sm font-medium text-ink-700">
+                  Generating AI monthly summary for {currentMonthLabel}…
+                </p>
+                <p className="text-xs text-ink-400">
+                  Analyzing cycle patterns, comfort trends, and recorded check-ins.
+                </p>
+              </div>
+            ) : monthlyAiSummary ? (
+              <div className="text-sm sm:text-base text-ink-800 leading-relaxed mt-3 font-medium space-y-3">
+                <p>{monthlyAiSummary.summary}</p>
+
+                {Array.isArray(monthlyAiSummary.keyPoints) && monthlyAiSummary.keyPoints.length > 0 && (
+                  <div className="pt-2">
+                    <p className="text-xs font-bold text-ink-500 uppercase tracking-wide mb-1.5">
+                      Key Highlights
+                    </p>
+                    <ul className="space-y-1 text-xs sm:text-sm text-ink-700 list-disc list-inside">
+                      {monthlyAiSummary.keyPoints.map((pt, idx) => (
+                        <li key={idx}>{pt}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {Array.isArray(monthlyAiSummary.patterns) && monthlyAiSummary.patterns.length > 0 && (
+                  <div className="pt-1">
+                    <p className="text-xs font-bold text-ink-500 uppercase tracking-wide mb-1.5">
+                      Observed Patterns
+                    </p>
+                    <ul className="space-y-1 text-xs sm:text-sm text-ink-700 list-disc list-inside">
+                      {monthlyAiSummary.patterns.map((p, idx) => (
+                        <li key={idx}>{p}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="text-sm sm:text-base text-ink-800 leading-relaxed mt-3 font-medium space-y-2">
+                {monthlySummaryText.map((line, index) => (
+                  <p key={index}>{line}</p>
+                ))}
+              </div>
+            )}
 
             <div className="mt-5 pt-4 border-t border-ink-100/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <p className="text-[11px] text-ink-400 italic">
@@ -817,7 +1127,7 @@ export default function ReportsHistory() {
                 icon={ArrowRight}
                 iconPosition="right"
                 onClick={() => navigate('/insights')}
-                className="self-start sm:self-auto !text-rose-600 hover:!bg-rose-100/80"
+                className="self-start sm:self-auto !text-rose-600 hover:!bg-rose-100/80 no-print"
               >
                 Ask Saathi about this report
               </Button>
