@@ -8,21 +8,21 @@ export default function Modal({
   children,
   footer,
   size = 'md',
+  position = 'center',
 }) {
-
   useEffect(() => {
-  if (!open) return
+    if (!open) return
 
-  const onKey = (e) => {
-    if (e.key === 'Escape') onClose?.()
-  }
+    const onKey = (e) => {
+      if (e.key === 'Escape') onClose?.()
+    }
 
-  window.addEventListener('keydown', onKey)
+    window.addEventListener('keydown', onKey)
 
-  return () => {
-    window.removeEventListener('keydown', onKey)
-  }
-}, [open, onClose])
+    return () => {
+      window.removeEventListener('keydown', onKey)
+    }
+  }, [open, onClose])
 
   if (!open) return null
 
@@ -34,7 +34,13 @@ export default function Modal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div
+      className={`fixed inset-0 z-50 flex ${
+        position === 'bottom'
+          ? 'items-end justify-center'
+          : 'items-center justify-center'
+      } p-4`}
+    >
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-white/75 backdrop-blur-2xl animate-fadeIn"
@@ -47,7 +53,11 @@ export default function Modal({
           relative mx-auto w-full ${widths[size]}
           max-h-[88vh]
           bg-surface
-          rounded-2xl
+          ${
+            position === 'bottom'
+              ? 'rounded-t-2xl rounded-b-none'
+              : 'rounded-2xl'
+          }
           shadow-lift
           animate-slideUp
           flex flex-col

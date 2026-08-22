@@ -636,6 +636,32 @@ export async function getHealthData(
     : null
 }
 
+export async function getHealthHistory(days = 7) {
+  const user = requireUser()
+
+  const snapshots = await getDocs(
+    collection(
+      db,
+      'users',
+      user.uid,
+      'healthEntries',
+    ),
+  )
+
+  const entries = snapshots.docs
+    .map((entry) => ({
+      id: entry.id,
+      ...entry.data(),
+    }))
+    .sort((a, b) =>
+      String(a.date || a.id).localeCompare(
+        String(b.date || b.id),
+      ),
+    )
+
+  return entries.slice(-days)
+}
+
 export async function getCustomSymptoms() {
   const user = requireUser()
 

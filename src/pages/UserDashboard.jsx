@@ -1,14 +1,29 @@
 import React, { useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import {
    Sparkles,  Smile,  ArrowRight, ClipboardPlus,
 } from 'lucide-react'
+import {
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+} from 'recharts'
 import Card from '../components/common/Card.jsx'
 import RecommendationCard from '../components/common/RecommendationCard.jsx'
 import CycleRing from '../components/charts/CycleRing.jsx'
 import Button from '../components/common/Button.jsx'
 import {
-  getUserData, getCycleData, getHealthData,
+  getUserData,
+  getCycleData,
+  getInsights,
+  getRecommendations,
+  getHealthData,
+  getHealthHistory,
 } from '../data/api.js'
 
 import saathiGirl from '../images/saathi-girl.png'
@@ -24,23 +39,73 @@ function getGreeting() {
   if (hour < 24) return 'Good evening'
 }
 
+function energyScore(value) {
+  const scores = {
+    'Very Low': 1,
+    Low: 2.5,
+    'Below Average': 4,
+    Medium: 5.5,
+    'Above Average': 7,
+    High: 8.5,
+    'Very High': 10,
+  }
+
+  return scores[value] ?? null
+}
+
+function moodScore(value) {
+  const scores = {
+    Happy: 10,
+    Energetic: 10,
+    Good: 8.5,
+    Content: 8,
+    Calm: 8,
+    Relaxed: 8,
+    Okay: 6.5,
+    Neutral: 6,
+    Tired: 4,
+    Low: 4,
+    Sad: 3,
+    Anxious: 3,
+    Stressed: 3,
+    Irritable: 3,
+    Angry: 2,
+    Frustrated: 3,
+    Emotional: 4,
+    Overwhelmed: 2,
+    Lonely: 3,
+    Sensitive: 5,
+  }
+
+  return scores[value] ?? null
+}
+
 export default function UserDashboard() {
-  const navigate = useNavigate()
   const [user, setUser] = useState(null)
   const [cycle, setCycle] = useState(null)
   const [todayLog, setTodayLog] = useState(null)
+  const [healthHistory, setHealthHistory] = useState([])
 
   useEffect(() => {
     Promise.all([
       getUserData(),
       getCycleData(),
       getHealthData(),
+      getHealthHistory(7),
     ])
-      .then(([userData, cycleData, healthData]) => {
-        setUser(userData)
-        setCycle(cycleData)
-        setTodayLog(healthData)
-      })
+      .then(
+        ([
+          userData,
+          cycleData,
+          healthData,
+          historyData,
+        ]) => {
+          setUser(userData)
+          setCycle(cycleData)
+          setTodayLog(healthData)
+          setHealthHistory(historyData)
+        },
+      )
       .catch((error) => {
         console.error('Dashboard load error:', error)
       })
@@ -53,8 +118,58 @@ export default function UserDashboard() {
       </div>
     )
   }
-
   const mood = todayLog?.moods?.[0] || todayLog?.mood || null
+
+  const graphData = healthHistory.map((entry) => {
+    // Consider ALL moods logged for the day
+    const moodValues = Array.isArray(entry.moods)
+      ? entry.moods
+      : entry.mood
+        ? [entry.mood]
+        : []
+
+    const moodScores = moodValues
+      .map(moodScore)
+      .filter((score) => score !== null)
+
+    const mood =
+      moodScores.length > 0
+        ? moodScores.reduce((sum, score) => sum + score, 0) /
+          moodScores.length
+        : null
+
+    const energy = energyScore(entry.energy)
+
+    const sleep =
+      entry.sleep != null
+        ? Math.min(Number(entry.sleep) / 8 * 10, 10)
+        : null
+
+    const hydration =
+      entry.waterLiters != null
+        ? Math.min(Number(entry.waterLiters) / 2.5 * 10, 10)
+        : null
+
+    const exercise =
+      entry.exerciseMinutes != null
+        ? Math.min(Number(entry.exerciseMinutes) / 60 * 10, 10)
+        : null
+
+    const date = new Date(
+      `${entry.date || entry.id}T00:00:00`,
+    )
+
+    return {
+      date: date.toLocaleDateString('en-IN', {
+        weekday: 'short',
+      }),
+      mood,
+      energy,
+      sleep,
+      hydration,
+      exercise,
+    }
+  })
   
 
   return (
@@ -337,6 +452,104 @@ export default function UserDashboard() {
               to="/wellness"
             />
           </div>
+        </Card>
+
+        <Card className="overflow-hidden lg:col-span-2">
+          <div className="flex items-center justify-between mb-5">
+            <div>
+              <h2 className="font-display font-semibold text-ink-900 text-lg">
+                Your Wellbeing Trend
+              </h2>
+
+              <p className="text-sm text-ink-500 mt-1">
+                See how your wellbeing has changed over the last 7 days.
+              </p>
+            </div>
+          </div>
+
+          {graphData.length > 0 ? (
+            <div className="w-full h-[360px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart
+                  data={graphData}
+                  margin={{
+                    top: 10,
+                    right: 10,
+                    left: -20,
+                    bottom: 5,
+                  }}
+                >
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    vertical={false}
+                  />
+
+                  <XAxis
+                    dataKey="date"
+                    tick={{ fontSize: 12 }}
+                  />
+
+                  <YAxis
+                    domain={[0, 10]}
+                    tick={{ fontSize: 12 }}
+                  />
+
+                  <Tooltip />
+
+                  <Legend />
+
+                  <Line
+                    type="monotone"
+                    dataKey="mood"
+                    name="Mood"
+                    stroke="#f43f5e"
+                    strokeWidth={2}
+                    dot={{ r: 3 }}
+                  />
+
+                  <Line
+                    type="monotone"
+                    dataKey="energy"
+                    name="Energy"
+                    stroke="#8b5cf6"
+                    strokeWidth={2}
+                    dot={{ r: 3 }}
+                  />
+
+                  <Line
+                    type="monotone"
+                    dataKey="sleep"
+                    name="Sleep"
+                    stroke="#3b82f6"
+                    strokeWidth={2}
+                    dot={{ r: 3 }}
+                  />
+
+                  <Line
+                    type="monotone"
+                    dataKey="hydration"
+                    name="Hydration"
+                    stroke="#06b6d4"
+                    strokeWidth={2}
+                    dot={{ r: 3 }}
+                  />
+
+                  <Line
+                    type="monotone"
+                    dataKey="exercise"
+                    name="Exercise"
+                    stroke="#22c55e"
+                    strokeWidth={2}
+                    dot={{ r: 3 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          ) : (
+            <div className="h-[360px] flex items-center justify-center text-sm text-ink-400">
+              Start logging your health to see your wellbeing trend.
+            </div>
+          )}
         </Card>
       </div>
     </div>

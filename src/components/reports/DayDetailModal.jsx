@@ -45,7 +45,7 @@ export default function DayDetailModal({ log, cycleInfo, open, onClose }) {
   const protectionUsed = Array.isArray(log.productOptions) ? log.productOptions : Array.isArray(log.protectionUsed) ? log.protectionUsed : []
 
   return (
-    <Modal open={open} onClose={onClose} title={formattedDate} size="lg">
+    <Modal open={open} onClose={onClose} title={formattedDate} size="lg" position='bottom'>
       <div className="flex flex-col gap-4 text-sm">
 
         {/* Stored Daily AI Report */}
