@@ -1,5 +1,5 @@
 import React from 'react'
-
+import { Link } from 'react-router-dom'
 import Card from './Card.jsx'
 import CustomIcon from './CustomIcon.jsx'
 
@@ -15,14 +15,12 @@ export default function RecommendationCard({
   title,
   tip,
   color = 'rose',
-  onClick,
+  to,
 }) {
-  return (
+  const content = (
     <Card
       hover
-      onClick={onClick}
-      className={onClick ? 'cursor-pointer' : ''}
-      as={onClick ? 'button' : 'div'}
+      className="cursor-pointer h-full"
     >
       <div
         className={`w-11 h-11 rounded-xl flex items-center justify-center mb-3 ${COLORS[color]}`}
@@ -39,4 +37,14 @@ export default function RecommendationCard({
       </p>
     </Card>
   )
+
+  if (to) {
+    return (
+      <Link to={to} className="block h-full">
+        {content}
+      </Link>
+    )
+  }
+
+  return content
 }

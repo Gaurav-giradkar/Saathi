@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Activity, Droplets, Dumbbell, HeartPulse, Moon, Save, Utensils } from 'lucide-react'
 import Button from '../components/common/Button.jsx'
 import Card from '../components/common/Card.jsx'
@@ -195,7 +196,7 @@ function OtherInput({ when, label, value, onChange }) {
 export default function DailyHealthTracker() {
   const today = new Date().toISOString().slice(0, 10)
   const { showToast } = useApp()
-
+  const navigate = useNavigate()
   const [selectedDate, setSelectedDate] = useState(today)
   const [record, setRecord] = useState(null)
   const [cycle, setCycle] = useState(null)
@@ -481,6 +482,7 @@ const save = async () => {
     )
 
     showToast('Check-In saved')
+    navigate('/dashboard')
   } catch (error) {
     console.error(
       'SAATHI SAVE ERROR:',

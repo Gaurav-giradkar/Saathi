@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import {
    Sparkles,  Smile,  ArrowRight, ClipboardPlus,
 } from 'lucide-react'
@@ -25,6 +25,7 @@ function getGreeting() {
 }
 
 export default function UserDashboard() {
+  const navigate = useNavigate()
   const [user, setUser] = useState(null)
   const [cycle, setCycle] = useState(null)
   const [todayLog, setTodayLog] = useState(null)
@@ -313,24 +314,27 @@ export default function UserDashboard() {
           </div>
         <div className="grid grid-cols-3 gap-3">
             <RecommendationCard
-              icon="🥗"
+              icon="nutrition"
               title="Nutrition"
               tip="Healthy choices for your cycle"
               color="rose"
+              to="/wellness"
             />
 
             <RecommendationCard
-              icon="🏃"
+              icon="movement"
               title="Movement"
               tip="Gentle activities for today"
               color="plum"
+              to="/wellness"
             />
 
             <RecommendationCard
-              icon="🧘"
+              icon="self-care"
               title="Self Care"
               tip="Take a little time for yourself"
               color="teal"
+              to="/wellness"
             />
           </div>
         </Card>
