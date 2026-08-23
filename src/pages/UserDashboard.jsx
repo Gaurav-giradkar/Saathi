@@ -171,7 +171,6 @@ export default function UserDashboard() {
     }
   })
   
-
   return (
    <div className="flex flex-col gap-6 animate-fadeIn bg-[#FFF8FB] min-h-screen p-4 sm:p-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
