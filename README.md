@@ -1,7 +1,7 @@
 # 🌸 Saathi
 
 <p align="center">
-  <img src="public/og-image.png" alt="Saathi" width="720">
+  <img src="src/images/saathi-hero.png" alt="Saathi" width="720">
 </p>
 
 <p align="center">
